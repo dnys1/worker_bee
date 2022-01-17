@@ -1,18 +1,30 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:worker_bee/worker_bee.dart';
+import 'example.worker.dart';
 
-import 'example.worker.vm.dart' if (dart.library.html) 'example.worker.js.dart';
-import 'example.worker.dart' deferred as worker;
-
-abstract class MyMessage {
+abstract class MyMessage implements WorkerMessage<String> {
   factory MyMessage({
-    required String message,
+    required Uint8List data,
   }) = MyMessageImpl;
 
-  String get message;
+  @Transferable()
+  Uint8List get data;
 }
 
 @WorkerBee()
-class MyWorker extends WorkerBeeBase<MyMessage, void> {
+abstract class MyWorker extends WorkerBeeBase<MyMessage, String> {
+  MyWorker();
+  factory MyWorker.create() = MyWorkerImpl;
+
   @override
-  Future<void> run() async {}
+  Future<String> run(
+    Stream<MyMessage> listen,
+    StreamSink<MyMessage> respond,
+  ) async {
+    final messageToEncode = await listen.first;
+    return base64Encode(messageToEncode.data);
+  }
 }

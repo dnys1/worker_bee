@@ -8,4 +8,8 @@ import 'package:worker_bee_builder/src/generator.dart';
 Builder workerBeeBuilder(BuilderOptions options) => LibraryBuilder(
       WorkerBeeGenerator(),
       generatedExtension: '.worker.dart',
+      additionalOutputExtensions: [
+        '.worker.vm.dart',
+        '.worker.js.dart',
+      ],
     );

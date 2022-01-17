@@ -1,6 +1,1 @@
-import 'example.dart' deferred as worker;
-
-Future<void> main() async {
-  await worker.loadLibrary();
-  worker.MyWorker().run();
-}
+export 'example.worker.vm.dart' if (dart.library.html) 'example.worker.js.dart';
