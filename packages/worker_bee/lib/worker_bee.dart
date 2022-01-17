@@ -54,7 +54,6 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
 
   Future<void> start();
 
-  @protected
   Future<void> connect();
 
   StreamChannel<M>? _channel;
