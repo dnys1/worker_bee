@@ -34,6 +34,11 @@ class Transferable {
   const Transferable();
 }
 
+/// Annotation class for native (WASM/FFI) call.
+class NativeCall {
+  const NativeCall();
+}
+
 /// A message type for communication between workers.
 abstract class WorkerMessage<R> {
   // List<Object?> get transferable;
@@ -42,7 +47,7 @@ abstract class WorkerMessage<R> {
 }
 
 abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
-    with StreamChannelMixin<M> {
+    with StreamChannelMixin {
   /// Should not be called directly! Use [start] to spawn a worker, and use [stream]
   /// and [sink] to communicate with it.
   ///
@@ -56,13 +61,13 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
 
   Future<void> connect();
 
-  StreamChannel<M>? _channel;
+  StreamChannel? _channel;
 
   @protected
   final Completer<void> ready = Completer();
 
   @override
-  StreamSink<M> get sink {
+  StreamSink get sink {
     if (_channel == null) {
       throw StateError('Must call start first');
     }
@@ -70,7 +75,7 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
   }
 
   @override
-  Stream<M> get stream {
+  Stream get stream {
     if (_channel == null) {
       throw StateError('Must call start first');
     }
@@ -78,7 +83,7 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
   }
 
   @protected
-  set channel(StreamChannel<M> channel) {
+  set channel(StreamChannel channel) {
     if (_channel != null) {
       throw StateError('Channel has already been set');
     }
