@@ -6,7 +6,6 @@ import 'dart:typed_data';
 import 'package:flutter_example/example.dart';
 import 'package:js/js.dart';
 import 'package:meta/meta.dart';
-import 'dart:core';
 
 import 'package:worker_bee/worker_bee.dart';
 
@@ -73,7 +72,6 @@ class MyWorkerImpl extends MyWorker {
     });
 
     // Passes outgoing messages to the worker instance.
-    // TODO: transferable
     controller.stream.listen((message) {
       print('(Main) Sending message to worker: ${message.data}');
       worker.postMessage(message, [message.data.buffer]);

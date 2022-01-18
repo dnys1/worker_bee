@@ -1,4 +1,0 @@
-output: lib/example.ffi.dart
-headers:
-  entry-points:
-    - src/binding.h

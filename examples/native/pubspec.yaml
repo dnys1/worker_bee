@@ -1,6 +1,6 @@
 name: native_example
 description: A new Flutter project.
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -14,6 +14,8 @@ dependencies:
   js: ^0.6.3
   worker_bee:
     path: ../../packages/worker_bee
+  native_lib:
+    path: native_lib
 
 dev_dependencies:
   flutter_test:
@@ -22,7 +24,6 @@ dev_dependencies:
   flutter_lints: ^1.0.0
   build_runner: ^2.1.7
   build_web_compilers: ^3.2.2
-  ffigen: ^4.1.2
 
 flutter:
   uses-material-design: true

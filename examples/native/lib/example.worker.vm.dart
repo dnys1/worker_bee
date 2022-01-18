@@ -6,8 +6,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:native_example/example.dart';
-import 'package:native_example/example.ffi.dart';
-import 'dart:core';
+import 'package:native_lib/native_lib.dart';
 
 import 'package:worker_bee/worker_bee.dart';
 
@@ -77,13 +76,16 @@ class MyWorkerImpl extends MyWorker {
     final native = NativeLibrary(dylib);
     //Copy data into C-memory
     final needsNul = data.last != 0;
-    final ptr = calloc.allocate<Int8>(needsNul ? data.length + 1 : data.length);
+    final ptr = malloc.allocate<Int8>(needsNul ? data.length + 1 : data.length);
     for (var i = 0; i < data.length; i++) {
       ptr.elementAt(i).value = data[i];
     }
+    if (needsNul) {
+      ptr.elementAt(data.length).value = 0;
+    }
     final out = native.base64_encode_ffi(ptr.cast());
     final result = out.cast<Utf8>().toDartString();
-    calloc.free(ptr);
+    malloc.free(ptr);
     return result;
   }
 }

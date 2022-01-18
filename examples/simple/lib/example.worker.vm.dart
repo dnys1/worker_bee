@@ -3,7 +3,6 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:example/example.dart';
-import 'dart:core';
 
 import 'package:worker_bee/worker_bee.dart';
 
