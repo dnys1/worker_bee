@@ -45,6 +45,7 @@ void _run(SendPort sendPort) async {
     ),
   );
   print('(Worker) Finished with result: $result');
+  await Future.delayed(Duration.zero);
   Isolate.exit(sendPort, MyMessageImpl.done(result));
 }
 
@@ -75,12 +76,14 @@ class MyWorkerImpl extends MyWorker {
     }
     final native = NativeLibrary(dylib);
     //Copy data into C-memory
-    final ptr = malloc.allocate<Int8>(data.length);
+    final needsNul = data.last != 0;
+    final ptr = calloc.allocate<Int8>(needsNul ? data.length + 1 : data.length);
     for (var i = 0; i < data.length; i++) {
       ptr.elementAt(i).value = data[i];
     }
     final out = native.base64_encode_ffi(ptr.cast());
     final result = out.cast<Utf8>().toDartString();
+    calloc.free(ptr);
     return result;
   }
 }
