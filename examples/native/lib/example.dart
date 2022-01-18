@@ -19,7 +19,10 @@ abstract class MyWorker extends WorkerBeeBase<MyMessage, String> {
   MyWorker();
   factory MyWorker.create() = MyWorkerImpl;
 
-  @NativeCall()
+  @NativeCall(
+    wasmPath: '/wasm/native_lib',
+    ffiLibrary: 'libnative',
+  )
   String base64Encode(Uint8List data);
 
   @override

@@ -36,7 +36,13 @@ class Transferable {
 
 /// Annotation class for native (WASM/FFI) call.
 class NativeCall {
-  const NativeCall();
+  const NativeCall({
+    required this.wasmPath,
+    required this.ffiLibrary,
+  });
+
+  final String wasmPath;
+  final String ffiLibrary;
 }
 
 /// A message type for communication between workers.
