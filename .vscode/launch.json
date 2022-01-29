@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Builder",
-            "cwd": "packages/worker_bee/example",
+            "cwd": "examples/simple",
             "request": "launch",
             "type": "dart",
             "program": ".dart_tool/build/entrypoint/build.dart",

@@ -23,7 +23,7 @@ void main(List<String> args) async {
 
     await example_worker.loadLibrary();
     final worker = example_worker.MyWorker.create();
-    await worker.start();
+    await worker.spawn();
     worker.sink.add(example_worker.MyMessage(
         data: Uint8List.fromList(utf8.encode(textToEncode))));
     final result = (await worker.stream.first).result!;

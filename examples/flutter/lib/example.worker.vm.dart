@@ -48,7 +48,7 @@ class MyWorkerImpl extends MyWorker {
   Future<void> connect() async {}
 
   @override
-  Future<void> start() async {
+  Future<void> spawn() async {
     print('(Main) Starting worker...');
     final receivePort = ReceivePort();
     channel = IsolateChannel.connectReceive(receivePort);

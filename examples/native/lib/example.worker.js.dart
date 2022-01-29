@@ -56,7 +56,7 @@ class MyWorkerImpl extends MyWorker {
   static final self = DedicatedWorkerGlobalScope.instance;
 
   @override
-  Future<void> start() async {
+  Future<void> spawn() async {
     print('(Main) Starting worker...');
     // Spawn the worker using the main script.
     final Worker worker = Worker('worker.dart.js');

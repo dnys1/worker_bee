@@ -46,7 +46,7 @@ class JSON {
 
 class MyWorkerImpl extends MyWorker {
   @override
-  Future<void> start() async {
+  Future<void> spawn() async {
     print('(Main) Starting worker...');
     // Spawn the worker using the main script.
     final Worker worker = Worker('worker.dart.js');

@@ -38,10 +38,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<String> computeBase64(String text) async {
     final worker = example_worker.MyWorker.create();
-    await worker.start();
-    worker.sink.add(
-        example_worker.MyMessage(data: Uint8List.fromList(utf8.encode(text))));
-    return (await worker.stream.first).result!;
+    await worker.spawn();
+    worker.sink.add(example_worker.MyMessage(
+      data: Uint8List.fromList(utf8.encode(text)),
+    ));
+    return await worker.result;
   }
 
   @override

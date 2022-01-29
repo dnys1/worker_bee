@@ -29,6 +29,12 @@ class WorkerBee {
   const WorkerBee();
 }
 
+class Hive {
+  const Hive(this.workers);
+
+  final List<Type> workers;
+}
+
 /// Annotation class for worker message types which should be transferred.
 class Transferable {
   const Transferable();
@@ -47,24 +53,26 @@ class NativeCall {
 
 /// A message type for communication between workers.
 abstract class WorkerMessage<R> {
-  // List<Object?> get transferable;
-
   R? get result;
 }
 
 abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
     with StreamChannelMixin {
-  /// Should not be called directly! Use [start] to spawn a worker, and use [stream]
-  /// and [sink] to communicate with it.
-  ///
   /// Runs the worker in a separate thread/WebWorker.
   ///
   /// Listen to the spawning thread using [listen] and respond using [respond].
+  ///
+  /// > Should not be called directly! Use [spawn] to spawn a worker, and use [stream]
+  /// > and [sink] to communicate with it.
   @protected
   Future<R> run(Stream<M> listen, StreamSink<M> respond);
 
-  Future<void> start();
+  /// Starts a remote worker and waits for it to connect.
+  Future<void> spawn();
 
+  /// Connects to a spawning thread.
+  ///
+  /// Should only be called from a worker bee.
   Future<void> connect();
 
   StreamChannel? _channel;
@@ -94,5 +102,10 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
       throw StateError('Channel has already been set');
     }
     _channel = channel;
+  }
+
+  Future<R> get result async {
+    final msg = await stream.cast<M>().firstWhere((el) => el.result is R);
+    return msg.result as R;
   }
 }
