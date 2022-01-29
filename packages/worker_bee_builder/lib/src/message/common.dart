@@ -16,6 +16,7 @@ abstract class MessageGenerator {
   MessageGenerator(this.workerEl, this.messageEl) {
     _checkCtors(workerEl.constructors);
     workerName = workerEl.name;
+    workerImplName = '${workerName}Impl';
     workerType = Reference(
       workerName,
       workerEl.librarySource.uri.toString(),
@@ -75,6 +76,7 @@ abstract class MessageGenerator {
   final ClassElement messageEl;
 
   late final String workerName;
+  late final String workerImplName;
   late final Reference workerType;
   late final Reference messageType;
   late final String messageTypeImplName;

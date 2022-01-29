@@ -160,8 +160,8 @@ class VmGenerator extends MessageGenerator {
           ..modifier = MethodModifier.async
           ..body = Code.scope((allocate) => '''
 final channel = ${allocate(DartTypes.streamChannel.isolateChannel)}.connectSend(sendPort);
-final result = await ${allocate(workerType)}.run(
-  channel.stream, 
+final result = await $workerImplName().run(
+  channel.stream.cast(), 
   channel.sink.transform(
     ${allocate(DartTypes.pkgAsync.streamSinkTranformer)}.fromHandlers(
       handleData: (${allocate(messageType)} data, ${allocate(DartTypes.async.eventSink)}<dynamic> sink) {
@@ -176,7 +176,30 @@ ${allocate(DartTypes.isolate.isolate)}.exit(sendPort, $messageTypeImplName._done
             '''),
       );
 
-  Class get _workerClass => Class((c) => c
-    ..name = '${workerName}Impl'
-    ..extend = workerType);
+  Code get _spawn => Code.scope((allocate) => '''
+  print('(Main) Starting worker...');
+  final receivePort = ${allocate(DartTypes.isolate.receivePort)}();
+  channel = ${allocate(DartTypes.streamChannel.isolateChannel)}.connectReceive(receivePort);
+  await ${allocate(DartTypes.isolate.isolate)}.spawn(_run, receivePort.sendPort);
+  ''');
+
+  Class get _workerClass => Class(
+        (c) => c
+          ..name = workerImplName
+          ..extend = workerType
+          ..methods.addAll([
+            Method((m) => m
+              ..annotations.add(DartTypes.core.override)
+              ..returns = DartTypes.async.future(DartTypes.core.void$)
+              ..name = 'connect'
+              ..modifier = MethodModifier.async
+              ..body = const Code('')),
+            Method((m) => m
+              ..annotations.add(DartTypes.core.override)
+              ..returns = DartTypes.async.future(DartTypes.core.void$)
+              ..name = 'spawn'
+              ..modifier = MethodModifier.async
+              ..body = _spawn),
+          ]),
+      );
 }

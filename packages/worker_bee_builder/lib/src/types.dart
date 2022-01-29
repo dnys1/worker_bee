@@ -1,7 +1,7 @@
 import 'dart:core' as core;
 import 'dart:async';
 import 'dart:convert' as convert;
-import 'dart:isolate' as isolate;
+import 'dart:isolate' as isolate_lib;
 import 'dart:typed_data';
 
 import 'package:async/async.dart' as async;
@@ -10,6 +10,7 @@ import 'package:meta/meta.dart' as meta;
 import 'package:stream_channel/stream_channel.dart' as stream_channel;
 import 'package:stream_channel/isolate_channel.dart' as isolate_channel;
 import 'package:stream_transform/stream_transform.dart' as stream_transform;
+import 'package:worker_bee/worker_bee.dart' as worker_bee;
 
 /// Common type references used throughout code generation.
 abstract class DartTypes {
@@ -23,6 +24,9 @@ abstract class DartTypes {
 
   /// `dart:convert` types.
   static const convert = _Convert();
+
+  /// `dart:html` types.
+  static const html = _Html();
 
   /// `dart:isolate` types.
   static const isolate = _Isolate();
@@ -44,6 +48,9 @@ abstract class DartTypes {
 
   /// `dart:typed_data` types.
   static const typedData = _TypedData();
+
+  /// `package:worker_bee` types.
+  static const workerBee = _WorkerBee();
 }
 
 /// `dart:core` types
@@ -167,17 +174,16 @@ class _Async {
             if (ref != null) ref,
           ]),
       );
-}
 
-/// `package:async` types
-class _PkgAsync {
-  const _PkgAsync();
-
-  static const _url = 'package:worker_bee/worker_bee.dart';
-
-  /// Creates an [async.StreamSinkTransformer] reference.
-  Reference get streamSinkTranformer =>
-      const Reference('StreamSinkTransformer', _url);
+  /// Creates a [StreamController] reference.
+  Reference streamController([Reference? ref]) => TypeReference(
+        (t) => t
+          ..symbol = 'StreamController'
+          ..url = _url
+          ..types.addAll([
+            if (ref != null) ref,
+          ]),
+      );
 }
 
 /// `dart:convert` types
@@ -202,19 +208,45 @@ class _Convert {
   Reference get utf8 => const Reference('utf8', _url);
 }
 
+/// `dart:html` types
+class _Html {
+  const _Html();
+
+  static const _url = 'dart:html';
+
+  /// Creates a `DedicatedWorkerGlobalScope` reference.
+  Reference get dedicatedWorkerGlobalScope =>
+      const Reference('DedicatedWorkerGlobalScope', _url);
+
+  /// Creates a `ErrorEvent` reference.
+  Reference get errorEvent => const Reference('ErrorEvent', _url);
+
+  /// Creates a `Event` reference.
+  Reference get event => const Reference('Event', _url);
+
+  /// Creates a `MessageEvent` reference.
+  Reference get messageEvent => const Reference('MessageEvent', _url);
+
+  /// Creates a `Worker` reference.
+  Reference get worker => const Reference('Worker', _url);
+}
+
 /// `dart:isolate` types
 class _Isolate {
   const _Isolate();
 
   static const _url = 'dart:isolate';
 
-  /// Creates an [isolate.Isolate] reference.
+  /// Creates an [isolate_lib.Isolate] reference.
   Reference get isolate => const Reference('Isolate', _url);
 
-  /// Creates an [isolate.SendPort] reference.
+  /// Creates an [isolate_lib.ReceivePort] reference.
+  Reference get receivePort => const Reference('ReceivePort', _url);
+
+  /// Creates an [isolate_lib.SendPort] reference.
   Reference get sendPort => const Reference('SendPort', _url);
 
-  /// Creates an [isolate.TransferableTypedData] reference.
+  /// Creates an [isolate_lib.TransferableTypedData] reference.
   Reference get transferableTypedData =>
       const Reference('TransferableTypedData', _url);
 }
@@ -248,6 +280,17 @@ class _Meta {
   Reference get immutable => const Reference('immutable', _url);
 }
 
+/// `package:async` types
+class _PkgAsync {
+  const _PkgAsync();
+
+  static const _url = 'package:worker_bee/worker_bee.dart';
+
+  /// Creates an [async.StreamSinkTransformer] reference.
+  Reference get streamSinkTranformer =>
+      const Reference('StreamSinkTransformer', _url);
+}
+
 /// `dart:typed_data` types
 class _TypedData {
   const _TypedData();
@@ -269,6 +312,10 @@ class _StreamChannel {
 
   /// Creates a [stream_channel.StreamChannel] reference.
   Reference get streamChannel => const Reference('StreamChannel', _url);
+
+  /// Creates a [stream_channel.StreamChannelController] reference.
+  Reference get streamChannelController =>
+      const Reference('StreamChannelController', _url);
 }
 
 /// `package:stream_transform` types
@@ -276,6 +323,17 @@ class _StreamTransform {
   const _StreamTransform();
 
   static const _url = 'package:worker_bee/worker_bee.dart';
+}
+
+/// `package:worker_bee` types
+class _WorkerBee {
+  const _WorkerBee();
+
+  static const _url = 'package:worker_bee/worker_bee.dart';
+
+  /// Creates a [worker_bee.WebWorkerException] reference.
+  Reference get webWorkerException =>
+      const Reference('WebWorkerException', _url);
 }
 
 extension ReferenceUtil on Reference {

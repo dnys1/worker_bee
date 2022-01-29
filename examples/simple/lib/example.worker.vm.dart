@@ -24,7 +24,7 @@ class MyMessageImpl implements MyMessage {
 
 void _run(SendPort sendPort) async {
   final channel = IsolateChannel.connectSend(sendPort);
-  final result = await MyWorker.run(
+  final result = await MyWorkerImpl().run(
     channel.stream.cast(),
     channel.sink.transform(StreamSinkTransformer.fromHandlers(
         handleData: (MyMessage data, EventSink<dynamic> sink) {
@@ -36,4 +36,14 @@ void _run(SendPort sendPort) async {
   Isolate.exit(sendPort, MyMessageImpl._done(result));
 }
 
-class MyWorkerImpl extends MyWorker {}
+class MyWorkerImpl extends MyWorker {
+  @override
+  Future<void> connect() async {}
+  @override
+  Future<void> spawn() async {
+    print('(Main) Starting worker...');
+    final receivePort = ReceivePort();
+    channel = IsolateChannel.connectReceive(receivePort);
+    await Isolate.spawn(_run, receivePort.sendPort);
+  }
+}

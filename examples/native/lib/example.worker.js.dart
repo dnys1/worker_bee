@@ -123,13 +123,16 @@ class MyWorkerImpl extends MyWorker {
     await wasm_bindgen('/wasm/native_lib_bg.wasm');
     print('(Worker) Connecting from worker...');
     final channel = StreamChannelController<MyMessage>();
-    WorkerGlobalScope.instance.addEventListener('message', (Event event) {
-      event as MessageEvent;
-      print('(Worker) Got message from main: ${event.data}');
-      final Map map = event.data;
-      final message = _myMessageImplFromMap(map);
-      channel.foreign.sink.add(message);
-    });
+    DedicatedWorkerGlobalScope.instance.addEventListener(
+      'message',
+      (Event event) {
+        event as MessageEvent;
+        print('(Worker) Got message from main: ${event.data}');
+        final Map map = event.data;
+        final message = _myMessageImplFromMap(map);
+        channel.foreign.sink.add(message);
+      },
+    );
     channel.foreign.stream.listen((message) {
       print('(Worker) Sending message to main: ${message.data}');
       postMessage(message);
