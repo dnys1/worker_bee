@@ -5,6 +5,9 @@ library worker_bee;
 
 import 'dart:async';
 
+import 'package:async/async.dart';
+import 'package:aws_common/aws_common.dart';
+import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 import 'package:stream_channel/stream_channel.dart';
 
@@ -26,11 +29,14 @@ export 'src/preamble.dart';
 /// }
 /// ```
 class WorkerBee {
-  const WorkerBee();
+  const WorkerBee([this.jsEntrypoint = 'main.dart.js']);
+
+  /// The URL to load the web worker from.
+  final String jsEntrypoint;
 }
 
-class Hive {
-  const Hive(this.workers);
+class WorkerHive {
+  const WorkerHive(this.workers);
 
   final List<Type> workers;
 }
@@ -51,13 +57,22 @@ class NativeCall {
   final String ffiLibrary;
 }
 
-/// A message type for communication between workers.
-abstract class WorkerMessage<R> {
-  R? get result;
-}
+abstract class WorkerBeeBase<Message, Result> with StreamChannelMixin<Message> {
+  WorkerBeeBase(this._serializers);
 
-abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
-    with StreamChannelMixin {
+  /// Serializers for message and result types.
+  final Serializers _serializers;
+
+  @protected
+  Object? serialize(Object? object) {
+    return _serializers.serialize(object);
+  }
+
+  @protected
+  T deserialize<T extends Object?>(Object? object) {
+    return _serializers.deserialize(object) as T;
+  }
+
   /// Runs the worker in a separate thread/WebWorker.
   ///
   /// Listen to the spawning thread using [listen] and respond using [respond].
@@ -65,7 +80,7 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
   /// > Should not be called directly! Use [spawn] to spawn a worker, and use [stream]
   /// > and [sink] to communicate with it.
   @protected
-  Future<R> run(Stream<M> listen, StreamSink<M> respond);
+  Future<Result> run(Stream<Message> listen, StreamSink<Message> respond);
 
   /// Starts a remote worker and waits for it to connect.
   Future<void> spawn();
@@ -75,13 +90,18 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
   /// Should only be called from a worker bee.
   Future<void> connect();
 
-  StreamChannel? _channel;
+  StreamChannel<Message>? _channel;
 
   @protected
   final Completer<void> ready = Completer();
 
+  final Completer<Result> _resultCompleter = Completer();
+
+  @protected
+  void complete(Result result) => _resultCompleter.complete(result);
+
   @override
-  StreamSink get sink {
+  StreamSink<Message> get sink {
     if (_channel == null) {
       throw StateError('Must call start first');
     }
@@ -89,7 +109,7 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
   }
 
   @override
-  Stream get stream {
+  Stream<Message> get stream {
     if (_channel == null) {
       throw StateError('Must call start first');
     }
@@ -97,15 +117,12 @@ abstract class WorkerBeeBase<M extends WorkerMessage<R>, R>
   }
 
   @protected
-  set channel(StreamChannel channel) {
+  set channel(StreamChannel<Message> channel) {
     if (_channel != null) {
       throw StateError('Channel has already been set');
     }
     _channel = channel;
   }
 
-  Future<R> get result async {
-    final msg = await stream.cast<M>().firstWhere((el) => el.result is R);
-    return msg.result as R;
-  }
+  Future<Result> get result => _resultCompleter.future;
 }

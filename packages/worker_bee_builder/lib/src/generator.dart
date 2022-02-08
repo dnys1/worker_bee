@@ -44,10 +44,20 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
     final messageType = typeArgs[0];
     final messageTypeEl = messageType.element;
     if (messageTypeEl == null || messageTypeEl is! ClassElement) {
-      throw ArgumentError(
-          'Could not find element for ${messageType.getDisplayString(withNullability: true)}.');
+      final messageTypeName =
+          messageType.getDisplayString(withNullability: true);
+      throw ArgumentError('Could not find element for $messageTypeName.');
     }
-    final messageImpls = generateMessages(element, messageTypeEl);
+
+    final resultType = typeArgs[1];
+    final resultTypeEl = resultType.element;
+    final jsEntrypoint = annotation.read('jsEntrypoint').stringValue;
+    final messageImpls = generateMessages(
+      element,
+      messageTypeEl,
+      resultTypeEl as ClassElement?,
+      jsEntrypoint,
+    );
 
     final libraries = <Target, String>{};
     for (final messageImpl in messageImpls) {
@@ -61,9 +71,19 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
   }
 
   List<WorkerMessageImpl> generateMessages(
-      ClassElement workerEl, ClassElement messageTypeEl) {
-    final vmClass = VmGenerator(workerEl, messageTypeEl).generate();
-    final jsClass = JsGenerator(workerEl, messageTypeEl).generate();
+    ClassElement workerEl,
+    ClassElement messageTypeEl,
+    ClassElement? resultTypeEl,
+    String jsEntrypoint,
+  ) {
+    final vmClass =
+        VmGenerator(workerEl, messageTypeEl, resultTypeEl).generate();
+    final jsClass = JsGenerator(
+      workerEl,
+      messageTypeEl,
+      resultTypeEl,
+      jsEntrypoint,
+    ).generate();
 
     return [
       WorkerMessageImpl(

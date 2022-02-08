@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:worker_bee/worker_bee.dart';
 import 'example.worker.dart';
 
-abstract class MyMessage implements WorkerMessage<String> {
+abstract class MyMessage extends WorkerMessage<String> {
   factory MyMessage({
     required Uint8List data,
   }) = MyMessageImpl;
@@ -14,7 +14,7 @@ abstract class MyMessage implements WorkerMessage<String> {
   Uint8List get data;
 }
 
-@WorkerBee()
+@WorkerBee('worker.dart.js')
 abstract class MyWorker extends WorkerBeeBase<MyMessage, String> {
   MyWorker();
   factory MyWorker.create() = MyWorkerImpl;

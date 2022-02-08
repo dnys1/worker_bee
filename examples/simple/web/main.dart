@@ -21,7 +21,7 @@ Future<String> computeBase64(String text) async {
   return worker.result;
 }
 
-@Hive([
+@WorkerHive([
   MyWorker,
 ])
 void main() {

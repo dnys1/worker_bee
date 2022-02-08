@@ -1,13 +1,17 @@
 name: worker_bee
-description: A starting point for Dart libraries or applications.
-version: 1.0.0
-# homepage: https://www.example.com
+description: Cross-platform isolated worker runtime
+version: 0.1.0
+publish_to: none
 
 environment:
   sdk: ">=2.15.0 <3.0.0"
 
 dependencies:
   async: ^2.8.2
+  aws_common:
+    hosted: https://pub.dillonnys.com
+    version: ^0.1.0
+  built_value: ^8.0.0
   js: ^0.6.3
   stream_channel: ^2.1.0
   stream_transform: ^2.0.0

@@ -28,6 +28,9 @@ abstract class DartTypes {
   /// `dart:html` types.
   static const html = _Html();
 
+  /// `dart:html_common` types.
+  static const htmlCommon = _HtmlCommon();
+
   /// `dart:isolate` types.
   static const isolate = _Isolate();
 
@@ -229,6 +232,23 @@ class _Html {
 
   /// Creates a `Worker` reference.
   Reference get worker => const Reference('Worker', _url);
+}
+
+/// `dart:html_common` types
+class _HtmlCommon {
+  const _HtmlCommon();
+
+  static const _url = 'dart:html_common';
+
+  Reference get dartToNative => const Reference(
+        'convertDartToNative_SerializedScriptValue',
+        _url,
+      );
+
+  Reference get nativeToDart => const Reference(
+        'convertNativeToDart_SerializedScriptValue',
+        _url,
+      );
 }
 
 /// `dart:isolate` types

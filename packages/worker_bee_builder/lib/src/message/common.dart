@@ -2,6 +2,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:worker_bee_builder/src/type_visitor.dart';
+import 'package:worker_bee_builder/src/types.dart';
 
 enum Target { vm, js }
 
@@ -13,7 +14,7 @@ class WorkerMessageImpl {
 }
 
 abstract class MessageGenerator {
-  MessageGenerator(this.workerEl, this.messageEl) {
+  MessageGenerator(this.workerEl, this.messageEl, this.resultEl) {
     _checkCtors(workerEl.constructors);
     workerName = workerEl.name;
     workerImplName = '${workerName}Impl';
@@ -38,14 +39,32 @@ abstract class MessageGenerator {
       }
     }
 
-    final resultTypeEl = messageEl.interfaces.single.typeArguments.singleOrNull;
-    if (resultTypeEl == null) {
+    trueResultType = resultEl?.thisType.accept(const SymbolVisitor()) ??
+        DartTypes.core.void$;
+    // _checkResultType(trueResultType.typeRef);
+    resultType =
+        trueResultType.isVoid ? DartTypes.core.object.nullable : trueResultType;
+  }
+
+  void _checkResultType(TypeReference resultType) {
+    const disallowedTypes = [
+      'BigInt',
+    ];
+    if (resultType.url != null &&
+        resultType.url != '' &&
+        resultType.url != 'dart:core') {
       throw ArgumentError(
-        'Result type must be specified, e.g. '
-        'MyMessage implements WorkerMessage<String>',
+        'Result type must be a dart:core type or a collection of core types',
       );
     }
-    resultType = resultTypeEl.accept(const SymbolVisitor());
+    final symbol = resultType.symbol;
+    if (disallowedTypes.contains(symbol)) {
+      throw ArgumentError('Invalid result type: $symbol');
+    }
+
+    for (var ref in resultType.types) {
+      _checkResultType(ref.typeRef);
+    }
   }
 
   void _checkCtors(List<ConstructorElement> ctors) {
@@ -74,6 +93,7 @@ abstract class MessageGenerator {
   final symbolVisitor = const SymbolVisitor();
   final ClassElement workerEl;
   final ClassElement messageEl;
+  final ClassElement? resultEl;
 
   late final String workerName;
   late final String workerImplName;
@@ -81,6 +101,7 @@ abstract class MessageGenerator {
   late final Reference messageType;
   late final String messageTypeImplName;
   late final List<FieldElement> messageFields;
+  late final Reference trueResultType;
   late final Reference resultType;
 
   Library generate();

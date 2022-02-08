@@ -44,3 +44,7 @@ class SymbolVisitor implements TypeVisitor<Reference> {
     return const Reference('void');
   }
 }
+
+extension ReferenceUtil on Reference {
+  bool get isVoid => this == const Reference('void');
+}
