@@ -76,8 +76,11 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
     ClassElement? resultTypeEl,
     String jsEntrypoint,
   ) {
-    final vmClass =
-        VmGenerator(workerEl, messageTypeEl, resultTypeEl).generate();
+    final vmClass = VmGenerator(
+      workerEl,
+      messageTypeEl,
+      resultTypeEl,
+    ).generate();
     final jsClass = JsGenerator(
       workerEl,
       messageTypeEl,

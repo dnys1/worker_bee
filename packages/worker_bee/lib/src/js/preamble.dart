@@ -5,6 +5,8 @@ import 'dart:html';
 
 import 'package:js/js.dart';
 
+import 'util.dart';
+
 @JS()
 external Object? get window;
 
@@ -15,16 +17,24 @@ bool get isWebWorker {
 
 /// Awaits assignment from the main process.
 Future<String> getWorkerAssignment() async {
-  final initCompleter = Completer<String>();
+  final initCompleter = Completer<String>.sync();
   late dynamic Function(Event) eventListener;
-  WorkerGlobalScope.instance.addEventListener(
-      'message',
-      eventListener = (event) {
-        WorkerGlobalScope.instance
-            .removeEventListener('message', eventListener);
-        initCompleter.complete((event as MessageEvent).data as String);
-      });
-  final initMessage = await initCompleter.future;
-  print('(Worker) Got assignment: $initMessage');
-  return initMessage;
+  self.addEventListener(
+    'message',
+    eventListener = (Event event) {
+      event as MessageEvent;
+      self.removeEventListener('message', eventListener);
+      final Object? assignment = event.data;
+      if (assignment is! String) {
+        initCompleter.completeError(StateError(
+          'Invalid worker assignment: ${JSON.stringify(assignment)}',
+        ));
+      } else {
+        initCompleter.complete(assignment);
+      }
+    },
+  );
+  final workerAssignment = await initCompleter.future;
+  print('(Worker) Got assignment: $workerAssignment');
+  return workerAssignment;
 }

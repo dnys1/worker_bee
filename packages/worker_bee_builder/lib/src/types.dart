@@ -351,6 +351,9 @@ class _WorkerBee {
 
   static const _url = 'package:worker_bee/worker_bee.dart';
 
+  /// Creates a [worker_bee.VmEntrypoint] reference.
+  Reference get vmEntrypoint => const Reference('VmEntrypoint', _url);
+
   /// Creates a [worker_bee.WebWorkerException] reference.
   Reference get webWorkerException =>
       const Reference('WebWorkerException', _url);

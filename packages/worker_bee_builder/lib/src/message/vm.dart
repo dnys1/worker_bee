@@ -1,5 +1,4 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:worker_bee_builder/src/message/common.dart';
 import 'package:worker_bee_builder/src/type_visitor.dart';
@@ -68,29 +67,6 @@ ${allocate(DartTypes.isolate.isolate)}.exit(sendPort, ${trueResultType.isVoid ? 
             '''),
       );
 
-  Code get _spawn => Code.scope((allocate) => '''
-  print('(Main) Starting worker...');
-  final receivePort = ${allocate(DartTypes.isolate.receivePort)}('$workerName');
-  final transformer = StreamTransformer<Object, ${allocate(messageType)}>.fromHandlers(
-      handleData: (data, sink) {
-        if (data is ${allocate(messageType)}) {
-          sink.add(data);
-        } else {
-          complete(data as ${allocate(resultType)});
-          sink.close();
-        }
-      },
-    );
-  channel = ${allocate(DartTypes.streamChannel.isolateChannel)}<Object>.connectReceive(receivePort)
-    .transformStream(transformer)
-    .cast();
-  // Listen to stream to activate transformer
-  stream.listen((message) {
-    print('(Main) Got message: \$message');
-  });
-  await ${allocate(DartTypes.isolate.isolate)}.spawn(_run, receivePort.sendPort);
-  ''');
-
   Class get _workerClass => Class(
         (c) => c
           ..name = workerImplName
@@ -98,16 +74,10 @@ ${allocate(DartTypes.isolate.isolate)}.exit(sendPort, ${trueResultType.isVoid ? 
           ..methods.addAll([
             Method((m) => m
               ..annotations.add(DartTypes.core.override)
-              ..returns = DartTypes.async.future(DartTypes.core.void$)
-              ..name = 'connect'
-              ..modifier = MethodModifier.async
-              ..body = const Code('')),
-            Method((m) => m
-              ..annotations.add(DartTypes.core.override)
-              ..returns = DartTypes.async.future(DartTypes.core.void$)
-              ..name = 'spawn'
-              ..modifier = MethodModifier.async
-              ..body = _spawn),
+              ..returns = DartTypes.workerBee.vmEntrypoint
+              ..type = MethodType.getter
+              ..name = 'vmEntrypoint'
+              ..body = refer('_run').code),
           ]),
       );
 }
