@@ -98,7 +98,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
     channel = StreamChannel<Message>(incomingMessages.stream, controller.sink);
 
     // Send assignment
-    worker.postMessage('$runtimeType');
+    worker.postMessage(name);
 
     await ready.future;
   }

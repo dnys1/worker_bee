@@ -17,7 +17,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   @override
   Future<void> spawn() async {
     print('(Main) Starting worker...');
-    final receivePort = ReceivePort('$runtimeType');
+    final receivePort = ReceivePort(name);
     final transformer = StreamTransformer<Object, Message>.fromHandlers(
       handleData: (data, sink) {
         if (data is Message) {

@@ -24,6 +24,9 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     }
   }
 
+  /// The name of the worker
+  String get name;
+
   /// Serializers for message and result types.
   final Serializers _serializers;
 

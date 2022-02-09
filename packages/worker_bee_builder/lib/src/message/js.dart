@@ -29,6 +29,12 @@ class JsGenerator extends MessageGenerator {
               ..annotations.add(DartTypes.core.override)
               ..returns = DartTypes.core.string
               ..type = MethodType.getter
+              ..name = 'name'
+              ..body = literalString(workerName).code),
+            Method((m) => m
+              ..annotations.add(DartTypes.core.override)
+              ..returns = DartTypes.core.string
+              ..type = MethodType.getter
               ..name = 'jsEntrypoint'
               ..body = literalString(entrypoint).code),
           ]),

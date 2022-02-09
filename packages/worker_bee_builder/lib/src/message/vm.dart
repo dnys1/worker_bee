@@ -74,6 +74,12 @@ ${allocate(DartTypes.isolate.isolate)}.exit(sendPort, ${trueResultType.isVoid ? 
           ..methods.addAll([
             Method((m) => m
               ..annotations.add(DartTypes.core.override)
+              ..returns = DartTypes.core.string
+              ..type = MethodType.getter
+              ..name = 'name'
+              ..body = literalString(workerName).code),
+            Method((m) => m
+              ..annotations.add(DartTypes.core.override)
               ..returns = DartTypes.workerBee.vmEntrypoint
               ..type = MethodType.getter
               ..name = 'vmEntrypoint'
