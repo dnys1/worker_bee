@@ -9,7 +9,6 @@ import 'package:code_builder/code_builder.dart';
 import 'package:meta/meta.dart' as meta;
 import 'package:stream_channel/stream_channel.dart' as stream_channel;
 import 'package:stream_channel/isolate_channel.dart' as isolate_channel;
-import 'package:stream_transform/stream_transform.dart' as stream_transform;
 import 'package:worker_bee/worker_bee.dart' as worker_bee;
 
 /// Common type references used throughout code generation.
@@ -45,9 +44,6 @@ abstract class DartTypes {
 
   /// `package:stream_channel` types.
   static const streamChannel = _StreamChannel();
-
-  /// `package:stream_transform` types.
-  static const streamTransform = _StreamTransform();
 
   /// `dart:typed_data` types.
   static const typedData = _TypedData();
@@ -336,13 +332,6 @@ class _StreamChannel {
   /// Creates a [stream_channel.StreamChannelController] reference.
   Reference get streamChannelController =>
       const Reference('StreamChannelController', _url);
-}
-
-/// `package:stream_transform` types
-class _StreamTransform {
-  const _StreamTransform();
-
-  static const _url = 'package:worker_bee/worker_bee.dart';
 }
 
 /// `package:worker_bee` types

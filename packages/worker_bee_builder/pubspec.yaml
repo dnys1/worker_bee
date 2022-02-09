@@ -1,22 +1,27 @@
 name: worker_bee_builder
-description: A starting point for Dart libraries or applications.
-version: 1.0.0
-# homepage: https://www.example.com
-publish_to: none
+description: Builder package for worker bees.
+version: 0.1.0
+homepage: https://github.com/dnys1/worker_bee
+publish_to: https://pub.dillonnys.com
 
 environment:
-  sdk: '>=2.15.0 <3.0.0'
+  sdk: ">=2.15.0 <3.0.0"
 
-dependencies: 
+dependencies:
   analyzer: ^3.0.0
+  async: ^2.8.2
   build: ^2.2.1
   code_builder: ^4.1.0
   collection: ^1.15.0
   dart_style: ^2.2.1
+  meta: ^1.7.0
+  path: ^1.8.1
   source_gen: ^1.2.1
+  stream_channel: ^2.1.0
   tuple: ^2.0.0
   worker_bee:
-    path: ../worker_bee
+    hosted: https://pub.dillonnys.com
+    version: ^0.1.0
 
 dev_dependencies:
   lints: ^1.0.0
