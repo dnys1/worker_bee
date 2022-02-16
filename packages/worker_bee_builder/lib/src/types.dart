@@ -160,7 +160,7 @@ class _Async {
   Reference future(Reference ref) => TypeReference(
         (t) => t
           ..symbol = 'Future'
-          ..url = _url
+          ..url = _Core._url
           ..types.add(ref),
       );
 
@@ -168,7 +168,7 @@ class _Async {
   Reference stream([Reference? ref]) => TypeReference(
         (t) => t
           ..symbol = 'Stream'
-          ..url = _url
+          ..url = _Core._url
           ..types.addAll([
             if (ref != null) ref,
           ]),
