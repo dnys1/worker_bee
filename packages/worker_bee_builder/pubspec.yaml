@@ -1,6 +1,6 @@
 name: worker_bee_builder
 description: Builder package for worker bees.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/dnys1/worker_bee
 publish_to: https://pub.dillonnys.com
 
@@ -21,7 +21,7 @@ dependencies:
   tuple: ^2.0.0
   worker_bee:
     hosted: https://pub.dillonnys.com
-    version: ^0.1.0
+    version: ^0.2.0
 
 dev_dependencies:
   lints: ^1.0.0
