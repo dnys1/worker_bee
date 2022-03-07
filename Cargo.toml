@@ -1,4 +1,0 @@
-[workspace]
-members = [
-    "examples/native/native_lib/src"
-]

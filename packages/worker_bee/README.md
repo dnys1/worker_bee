@@ -1,39 +1,106 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Worker Bee
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+Runtime package for worker bees.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+## Getting Started
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
-
-## Features
-
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+To get started, create an abstract class extending `WorkerBeeBase`. This will be where your worker's business logic lives. Workers communicate via message passing and optionally, complete with a result. `WorkerBeeBase` requires both of these types to be specified, and additionally requires that the types be serializable via `built_value`.
 
 ```dart
-const like = 'sample';
+/// A worker bee which communicates via passing strings and which does not have a result type.
+abstract class MyWorker extends WorkerBeeBase<String, void>
 ```
 
-## Additional information
+Next, create the required constructors:
+1. A default constructor, which optionally calls `super` with `built_value` serializers if using a custom type for the message or result.
+2. A factory constructor called `create` which redirects to a to-be-created implementation class called `<WorkerName>Impl`.
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+```dart
+abstract class MyWorker extends WorkerBeeBase<String, void> {
+    MyWorker();
+    factory MyWorker.create() = MyWorkerImpl;
+}
+```
+
+Now, add the business logic by overriding the `run` method.
+
+```dart
+abstract class MyWorker extends WorkerBeeBase<String, void> {
+    MyWorker();
+    factory MyWorker.create() = MyWorkerImpl;
+
+    @override
+    Future<void> run(
+        Stream<String> listen,
+        StreamSink<String> respond,
+    ) async {
+        await for (final message in listen) {
+            if (message == 'ping') {
+                respond.add('pong');
+            }
+        }
+    }
+}
+```
+
+And annotate the class as a `WorkerBee` and import the to-be-generated worker definition file, called `<filename>.worker.dart`.
+
+```dart
+import 'my_worker.worker.dart';
+
+@WorkerBee()
+abstract class MyWorker extends WorkerBeeBase<String, void> {
+    // ...
+}
+```
+
+Make sure you have a dev dependency on `build_runner` and `worker_bee_builder` and run `dart run build_runner build`. This should generate three files:
+- `my_worker.worker.js.dart`: The worker implementation used on Web.
+- `my_worker.worker.vm.dart`: The worker implementation used on desktop and mobile.
+- `my_worker.worker.dart`: The conditional import file for picking the correct platform file to import.
+
+## Running the Worker
+
+To run the worker, wrap your `main` function with the `runHive` command. The first parameter is a variable called workers which is not yet generated. The second paramter is your main function.
+
+```dart
+void main() {
+    runHive(workers, () {
+        print('Hello, world');
+    });
+}
+```
+
+Annotate your main function with all your worker bee class types and add a `part` directive for the generated file.
+
+```dart
+part 'main.g.dart';
+
+@WorkerHive([
+    MyWorker,
+])
+void main() {
+    runHive(workers, () {
+        print('Hello, world');
+    });
+}
+```
+
+Again, run `dart run build_runner build`.
+
+At this point, your app should compile, although you haven't interacted with your worker at all. To do so, you must create a worker using `MyWorker.create()` and start sending messages to it.
+
+```dart
+void main() {
+    runHive(workers, () async {
+        final worker = MyWorker.create();
+        await worker.spawn();
+        worker.stream.listen((msg) {
+            print('Got message from worker: $msg');
+        })
+        worker.sink.add('ping');
+    });
+}
+
+// Got message from worker: pong
+```

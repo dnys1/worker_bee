@@ -21,8 +21,7 @@
             "request": "launch",
             "program": "lib/main.dart",
             "cwd": "examples/flutter"
-        }
-        ,
+        },
         {
             "name": "Native",
             "type": "dart",

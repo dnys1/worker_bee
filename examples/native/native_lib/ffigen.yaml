@@ -1,4 +1,0 @@
-output: lib/native_lib.dart
-headers:
-  entry-points:
-    - src/binding.h
