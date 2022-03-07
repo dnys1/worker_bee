@@ -1,9 +1,0 @@
-{
-    "files.watcherExclude": {
-        "**/build/**": true
-    },
-    "dart.analysisExcludedFolders": [
-        "examples/flutter/build",
-        "examples/native/build",
-    ]
-}
