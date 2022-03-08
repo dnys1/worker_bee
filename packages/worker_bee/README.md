@@ -1,6 +1,7 @@
 # Worker Bee
 
 - [Worker Bee](#worker-bee)
+    - [Caveats](#caveats)
   - [Getting Started](#getting-started)
   - [Running the Worker](#running-the-worker)
   - [How It Works](#how-it-works)
@@ -122,7 +123,7 @@ On desktop & mobile, an [Isolate](https://api.dart.dev/stable/dart-isolate/Isola
 
 On Web, the following protocol is used to spawn and communicate with a dedicated [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
 
-![Web Worker Protocol diagram](../../docs/worker.png)
+![Web Worker Protocol diagram](/docs/worker.png)
 
 1. Instantiate a worker and call `.spawn` on it.
 2. This creates a Web worker which spawns the worker's entrypoint script on another thread.
