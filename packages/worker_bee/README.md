@@ -1,7 +1,6 @@
 # Worker Bee
 
 - [Worker Bee](#worker-bee)
-    - [Caveats](#caveats)
   - [Getting Started](#getting-started)
   - [Running the Worker](#running-the-worker)
   - [How It Works](#how-it-works)
