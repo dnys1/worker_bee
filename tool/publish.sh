@@ -8,6 +8,7 @@ function cleanUp {
 }
 trap cleanUp EXIT
 
+pushd example
 dart run build_runner build --delete-conflicting-outputs
 webdev build
 

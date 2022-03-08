@@ -10,7 +10,7 @@ Future<void> _run(SendPort sendPort) async {
     channel.stream,
     channel.sink,
   );
-  print('(Worker) Finished with result: $result');
+  safePrint('(Worker) Finished with result: $result');
   Isolate.exit(sendPort, result);
 }
 
