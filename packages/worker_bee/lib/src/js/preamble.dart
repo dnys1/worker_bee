@@ -1,21 +1,21 @@
 @JS()
 
 import 'dart:async';
-import 'dart:html';
+import 'dart:html' hide window;
 
 import 'package:js/js.dart';
 
 import 'util.dart';
 
-@JS()
-external Object? get window;
+@JS('window')
+external Object? get _window;
 
-/// Whether the current script is running inside a web worker.
+/// {@macro worker_bee.is_web_worker}
 bool get isWebWorker {
-  return window == null;
+  return _window == null;
 }
 
-/// Awaits assignment from the main process.
+/// {@macro worker_bee.get_worker_assignment}
 Future<String> getWorkerAssignment() async {
   final initCompleter = Completer<String>.sync();
   late dynamic Function(Event) eventListener;

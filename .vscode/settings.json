@@ -5,5 +5,8 @@
     "dart.analysisExcludedFolders": [
         "examples/flutter/build",
         "examples/native/build",
-    ]
+    ],
+    "markdown.extension.toc.omittedFromToc": {
+        "packages/worker_bee/README.md": ["### Caveats"]
+    }
 }

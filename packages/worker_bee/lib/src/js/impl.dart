@@ -6,10 +6,9 @@ import 'package:worker_bee/worker_bee.dart';
 
 import 'util.dart';
 
+/// {@macro worker_bee.worker_bee_impl}
 mixin WorkerBeeImpl<Message extends Object, Result>
     on WorkerBeeCommon<Message, Result> {
-  static final self = DedicatedWorkerGlobalScope.instance;
-
   @override
   String get jsEntrypoint;
 

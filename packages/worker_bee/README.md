@@ -1,6 +1,18 @@
 # Worker Bee
 
-Runtime package for worker bees.
+- [Worker Bee](#worker-bee)
+    - [Caveats](#caveats)
+  - [Getting Started](#getting-started)
+  - [Running the Worker](#running-the-worker)
+  - [How It Works](#how-it-works)
+
+Worker bees are isolated units of computation which can be offloaded from the main thread. In Dart, this must be accomplished via different mechanisms depending on the targeted platform (Isolates for VM, and Web Workers for Web). Managing an abstraction between these mechanisms can be difficult and 
+
+Worker bees provide an opinionated solution to these problems, allowing a single worker definition to be the source of truth for both VM and Web targets. Futher, web workers can be bundled in a single `.js` file to minimize the amount of code which needs to be shipped to the user's browser.
+
+### Caveats
+- Workers must be compiled using dart2js (not DDC)
+- Message and result types must be serializable via `built_value`
 
 ## Getting Started
 
@@ -104,3 +116,18 @@ void main() {
 
 // Got message from worker: pong
 ```
+
+## How It Works
+
+On desktop & mobile, an [Isolate](https://api.dart.dev/stable/dart-isolate/Isolate-class.html) is used. The `worker_bee_builder` package generates a top-level function which is safe to pass to [Isolate.spawn](https://api.dart.dev/stable/dart-isolate/Isolate/spawn.html).
+
+On Web, the following protocol is used to spawn and communicate with a dedicated [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
+
+![Web Worker Protocol diagram](../../docs/worker.png)
+
+1. Instantiate a worker and call .spawn on it.
+2. This creates a WebWorker which uses workers.js as its entrypoint on another thread.
+3. The worker sees that it's running in a Web worker and waits for its assignment (since it contains the code for all the workers). The main thread posts its assignment.
+4. The worker thread creates an instance of the worker and calls .connect on it. Some setup happens and the worker tells the main thread it's ready. This is when the await worker.spawn() call returns.
+5. The worker thread calls .run. Any number of messages of the worker's message type can be sent back and forth.
+6. When the run method completes, the worker sends back the return value as the result. The main thread can await this value using worker.result

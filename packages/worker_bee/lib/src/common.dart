@@ -4,11 +4,14 @@ import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 import 'package:stream_channel/stream_channel.dart';
 
+/// {@template worker_bee.worker_bee_common}
 /// The common (platform-agnostic) implementations for a worker bee.
 ///
 /// The actual base class mixes in platform-specific code to this class.
+/// {@endtemplate}
 abstract class WorkerBeeCommon<Message extends Object, Result>
     with StreamChannelMixin<Message> {
+  /// {@template worker_bee.worker_bee_common}
   WorkerBeeCommon([Serializers? serializers])
       : _serializers = serializers ?? Serializers() {
     _checkSerializers();
@@ -24,7 +27,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     }
   }
 
-  /// The name of the worker
+  /// The name of the worker.
   String get name;
 
   /// Serializers for message and result types.
@@ -36,11 +39,13 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// The script URL for the compiled workers.
   String get jsEntrypoint => throw UnimplementedError();
 
+  /// Serializes an object using the registered `built_value` serializers.
   @protected
   Object? serialize(Object? object) {
     return _serializers.serialize(object);
   }
 
+  /// Deserializes an object using the registered `built_value` serializers.
   @protected
   T deserialize<T extends Object?>(Object? object) {
     return _serializers.deserialize(object) as T;
@@ -56,7 +61,8 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   Future<Result> run(Stream<Message> listen, StreamSink<Message> respond);
 
   /// Starts a remote worker and waits for it to connect.
-  Future<void> spawn();
+  ///
+  /// Optionally, you can override the [jsEntrypoint] for this call.
 
   /// Connects to a spawning thread.
   ///
@@ -65,6 +71,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
 
   StreamChannel<Message>? _channel;
 
+  /// The asynchronous ready trigger.
   @protected
   final Completer<void> ready = Completer();
 
@@ -89,6 +96,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     return _channel!.stream;
   }
 
+  /// Sets the stream channel for communication.
   @protected
   set channel(StreamChannel<Message> channel) {
     if (_channel != null) {
@@ -97,5 +105,6 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     _channel = channel;
   }
 
+  /// The result of the worker bee's computation.
   Future<Result> get result => _resultCompleter.future;
 }

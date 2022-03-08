@@ -4,10 +4,12 @@ import 'package:worker_bee/worker_bee.dart';
 
 import 'vm/preamble.dart' if (dart.library.html) 'js/preamble.dart';
 
-typedef WorkerBeeBuilder<W extends WorkerBeeBase> = W Function();
+/// Factory for a worker bee.
 
 /// Initializes worker bees by checking if running in a web worker, and awaiting
 /// the assigned role if so.
+///
+/// This only needs to be used when targeting Web. It is a no-op on VM.
 Future<void> runHive<R>(
   Map<String, WorkerBeeBuilder> workers,
   FutureOr<void> Function() runApp,
