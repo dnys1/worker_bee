@@ -1,0 +1,154 @@
+# Created with package:mono_repo v6.0.0
+name: Dart Lint
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  schedule:
+    - cron: "0 0 * * 0"
+defaults:
+  run:
+    shell: bash
+env:
+  PUB_ENVIRONMENT: bot.github
+
+jobs:
+  job_001:
+    name: mono_repo self validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v2.1.7
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+      - id: checkout
+        uses: actions/checkout@v2.4.0
+      - name: mono_repo self validate
+        run: dart pub global activate mono_repo 6.0.0
+      - name: mono_repo self validate
+        run: dart pub global run mono_repo generate --validate
+  job_002:
+    name: "analyze_and_format; Dart dev; PKGS: packages/e2e_test, packages/worker_bee, packages/worker_bee_builder; `dart format --output=none --set-exit-if-changed .`, `dart analyze --fatal-infos .`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v2.1.7
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test-packages/worker_bee-packages/worker_bee_builder;commands:format-analyze"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test-packages/worker_bee-packages/worker_bee_builder
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: dev
+      - id: checkout
+        uses: actions/checkout@v2.4.0
+      - id: packages_e2e_test_pub_upgrade
+        name: packages/e2e_test; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart pub upgrade
+      - name: "packages/e2e_test; dart format --output=none --set-exit-if-changed ."
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: "dart format --output=none --set-exit-if-changed ."
+      - name: "packages/e2e_test; dart analyze --fatal-infos ."
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart analyze --fatal-infos .
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: "packages/worker_bee; dart format --output=none --set-exit-if-changed ."
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: "dart format --output=none --set-exit-if-changed ."
+      - name: "packages/worker_bee; dart analyze --fatal-infos ."
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart analyze --fatal-infos .
+      - id: packages_worker_bee_builder_pub_upgrade
+        name: packages/worker_bee_builder; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee_builder
+        run: dart pub upgrade
+      - name: "packages/worker_bee_builder; dart format --output=none --set-exit-if-changed ."
+        if: "always() && steps.packages_worker_bee_builder_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee_builder
+        run: "dart format --output=none --set-exit-if-changed ."
+      - name: "packages/worker_bee_builder; dart analyze --fatal-infos ."
+        if: "always() && steps.packages_worker_bee_builder_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee_builder
+        run: dart analyze --fatal-infos .
+  job_003:
+    name: "analyze_and_format; Dart stable; PKGS: packages/e2e_test, packages/worker_bee, packages/worker_bee_builder; `dart format --output=none --set-exit-if-changed .`, `dart analyze --fatal-infos .`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v2.1.7
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test-packages/worker_bee-packages/worker_bee_builder;commands:format-analyze"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test-packages/worker_bee-packages/worker_bee_builder
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+      - id: checkout
+        uses: actions/checkout@v2.4.0
+      - id: packages_e2e_test_pub_upgrade
+        name: packages/e2e_test; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart pub upgrade
+      - name: "packages/e2e_test; dart format --output=none --set-exit-if-changed ."
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: "dart format --output=none --set-exit-if-changed ."
+      - name: "packages/e2e_test; dart analyze --fatal-infos ."
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart analyze --fatal-infos .
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: "packages/worker_bee; dart format --output=none --set-exit-if-changed ."
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: "dart format --output=none --set-exit-if-changed ."
+      - name: "packages/worker_bee; dart analyze --fatal-infos ."
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart analyze --fatal-infos .
+      - id: packages_worker_bee_builder_pub_upgrade
+        name: packages/worker_bee_builder; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee_builder
+        run: dart pub upgrade
+      - name: "packages/worker_bee_builder; dart format --output=none --set-exit-if-changed ."
+        if: "always() && steps.packages_worker_bee_builder_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee_builder
+        run: "dart format --output=none --set-exit-if-changed ."
+      - name: "packages/worker_bee_builder; dart analyze --fatal-infos ."
+        if: "always() && steps.packages_worker_bee_builder_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee_builder
+        run: dart analyze --fatal-infos .
