@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:html' hide window;
 
 import 'package:js/js.dart';
+import 'package:worker_bee/src/util.dart';
 
 import 'util.dart';
 
@@ -35,6 +36,6 @@ Future<String> getWorkerAssignment() async {
     },
   );
   final workerAssignment = await initCompleter.future;
-  print('(Worker) Got assignment: $workerAssignment');
+  safePrint('(Worker) Got assignment: $workerAssignment');
   return workerAssignment;
 }

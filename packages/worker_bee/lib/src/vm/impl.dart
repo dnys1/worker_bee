@@ -1,11 +1,18 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:meta/meta.dart';
 import 'package:worker_bee/src/common.dart';
 import 'package:worker_bee/worker_bee.dart';
 
+/// The function signature for the generated VM entrypoint, as required by
+/// [Isolate.spawn].
 typedef VmEntrypoint = Future<void> Function(SendPort);
 
+/// {@template worker_bee.worker_bee_impl}
+/// The platform-specific implementation of [WorkerBeeCommon].
+/// {@endtemplate}
+@internal
 mixin WorkerBeeImpl<Message extends Object, Result>
     on WorkerBeeCommon<Message, Result> {
   @override
@@ -15,8 +22,8 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   Future<void> connect() async {}
 
   @override
-  Future<void> spawn() async {
-    print('(Main) Starting worker...');
+  Future<void> spawn({String? jsEntrypoint}) async {
+    safePrint('(Main) Starting worker...');
     final receivePort = ReceivePort(name);
     final transformer = StreamTransformer<Object, Message>.fromHandlers(
       handleData: (data, sink) {
@@ -34,7 +41,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
 
     // Listen to stream to activate transformer
     stream.listen((message) {
-      print('(Main) Got message: $message');
+      safePrint('(Main) Got message: $message');
     });
 
     await Isolate.spawn(

@@ -63,6 +63,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Starts a remote worker and waits for it to connect.
   ///
   /// Optionally, you can override the [jsEntrypoint] for this call.
+  Future<void> spawn({String? jsEntrypoint});
 
   /// Connects to a spawning thread.
   ///
@@ -75,10 +76,23 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   @protected
   final Completer<void> ready = Completer();
 
-  final Completer<Result> _resultCompleter = Completer();
+  final Completer<Result> _resultCompleter = Completer.sync();
 
+  /// Internal method for completing successfully with a result.
   @protected
-  void complete(Result result) => _resultCompleter.complete(result);
+  void complete(Result result) {
+    if (!_resultCompleter.isCompleted) {
+      _resultCompleter.complete(result);
+    }
+  }
+
+  /// Internal method for completing with an error.
+  @protected
+  void completeError(Object error, [StackTrace? stackTrace]) {
+    if (!_resultCompleter.isCompleted) {
+      _resultCompleter.completeError(error, stackTrace);
+    }
+  }
 
   @override
   StreamSink<Message> get sink {
@@ -88,12 +102,14 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     return _channel!.sink;
   }
 
+  late final Stream<Message> _stream = _channel!.stream.asBroadcastStream();
+
   @override
   Stream<Message> get stream {
     if (_channel == null) {
       throw StateError('Must call start first');
     }
-    return _channel!.stream;
+    return _stream;
   }
 
   /// Sets the stream channel for communication.

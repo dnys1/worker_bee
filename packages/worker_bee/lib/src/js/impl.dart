@@ -14,37 +14,39 @@ mixin WorkerBeeImpl<Message extends Object, Result>
 
   @override
   Future<void> connect() async {
-    print('(Worker) Connecting from worker...');
-    final channel = StreamChannelController<Message>();
+    safePrint('(Worker) Connecting from worker...');
+    final channel = StreamChannelController<Message>(sync: true);
     self.addEventListener(
       'message',
       (Event event) {
         event as MessageEvent;
-        print('(Worker) Got message from main: ${event.data}');
+        safePrint('(Worker) Got message: ${event.data}');
         final serialized = event.data as Object?;
         final message = deserialize<Message>(serialized);
         channel.foreign.sink.add(message);
       },
     );
     channel.foreign.stream.listen((message) {
-      print('(Worker) Sending message to main: ${JSON.stringify(message)}');
+      safePrint('(Worker) Sending message: $message');
       self.postMessage(serialize(message));
     });
-    print('(Worker) Sending ready event');
+    safePrint('(Worker) Sending ready event');
     self.postMessage('ready');
     final result = await run(
       channel.local.stream,
       channel.local.sink,
     );
-    print('(Worker) Finished with result: $result');
+    safePrint('(Worker) Finished with result: $result');
     self.postMessage(serialize(result));
   }
 
   @override
-  Future<void> spawn() async {
-    print('(Main) Spawning worker at $jsEntrypoint...');
+  Future<void> spawn({String? jsEntrypoint}) async {
+    final entrypoint = jsEntrypoint ?? this.jsEntrypoint;
+    safePrint('(Main) Spawning worker at $entrypoint...');
+
     // Spawn the worker using the main script.
-    final worker = Worker(jsEntrypoint);
+    final worker = Worker(entrypoint);
 
     // Create the controller to handle message passing.
     // ignore: close_sinks
@@ -55,31 +57,35 @@ mixin WorkerBeeImpl<Message extends Object, Result>
 
     // Listen for error messages on the worker.
     worker.onError.listen((Event event) {
-      print('(Main) Error from worker: $event');
+      final eventJson = JSON.stringify(event);
+      safePrint('(Main) Error from worker: $eventJson');
+      WebWorkerException error;
       if (event is ErrorEvent) {
-        controller.addError(WebWorkerException(
-          event.message ?? JSON.stringify(event),
+        error = WebWorkerException(
+          event.message ?? eventJson,
           filename: event.filename,
           lineNo: event.lineno,
-        ));
+        );
       } else {
-        controller.addError(WebWorkerException(JSON.stringify(event)));
+        error = WebWorkerException(eventJson);
       }
+      controller.addError(error);
+      completeError(result);
     });
 
     // Passes outgoing messages to the worker instance.
     controller.stream.listen((message) {
-      print('(Main) Sending message to worker: ${JSON.stringify(message)}');
-      worker.postMessage(serialize(message)); // TODO: Transferable
+      safePrint('(Main) Sending message: $message');
+      worker.postMessage(serialize(message));
     });
 
     // Listen to worker
     // ignore: close_sinks
     final incomingMessages = StreamController<Message>(sync: true);
     worker.onMessage.listen((MessageEvent event) {
-      print('(Main) Got message from worker: ${event.data}');
+      safePrint('(Main) Got message: ${event.data}');
       if (event.data is String && event.data == 'ready') {
-        print('(Main) Received ready event');
+        safePrint('(Main) Received ready event');
         ready.complete();
         return;
       }
