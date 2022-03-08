@@ -1,7 +1,6 @@
 # Worker Bee
 
 - [Worker Bee](#worker-bee)
-    - [Caveats](#caveats)
   - [Getting Started](#getting-started)
   - [Running the Worker](#running-the-worker)
   - [How It Works](#how-it-works)
@@ -125,9 +124,9 @@ On Web, the following protocol is used to spawn and communicate with a dedicated
 
 ![Web Worker Protocol diagram](../../docs/worker.png)
 
-1. Instantiate a worker and call .spawn on it.
-2. This creates a WebWorker which uses workers.js as its entrypoint on another thread.
-3. The worker sees that it's running in a Web worker and waits for its assignment (since it contains the code for all the workers). The main thread posts its assignment.
-4. The worker thread creates an instance of the worker and calls .connect on it. Some setup happens and the worker tells the main thread it's ready. This is when the await worker.spawn() call returns.
-5. The worker thread calls .run. Any number of messages of the worker's message type can be sent back and forth.
-6. When the run method completes, the worker sends back the return value as the result. The main thread can await this value using worker.result
+1. Instantiate a worker and call `.spawn` on it.
+2. This creates a Web worker which spawns the worker's entrypoint script on another thread.
+3. The worker sees that it's running in a Web worker and waits for its assignment (since it potentially contains code for multiple workers). The main thread posts its assignment.
+4. The worker thread creates an instance of the worker and calls `.connect` on it. Some setup happens and the worker tells the main thread it's ready. This is when the `await worker.spawn()` call returns.
+5. The worker thread calls `.run`. Any number of messages of the worker's message type can be sent back and forth.
+6. When the `run` method completes, the worker sends back the return value as the result. The main thread can await this value using `worker.result`.
