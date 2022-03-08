@@ -5,7 +5,7 @@
   - [Running the Worker](#running-the-worker)
   - [How It Works](#how-it-works)
 
-Worker bees are isolated units of computation which can be offloaded from the main thread. In Dart, this must be accomplished via different mechanisms depending on the targeted platform (Isolates for VM, and Web Workers for Web). Managing an abstraction between these mechanisms can be difficult and 
+Worker bees are isolated units of computation which can be offloaded from the main thread. In Dart, this must be accomplished via different mechanisms depending on the targeted platform (Isolates for VM, and Web Workers for Web). Managing an abstraction between these mechanisms can be difficult, introducing an added layer of complexity in your code and build pipeline.
 
 Worker bees provide an opinionated solution to these problems, allowing a single worker definition to be the source of truth for both VM and Web targets. Futher, web workers can be bundled in a single `.js` file to minimize the amount of code which needs to be shipped to the user's browser.
 
