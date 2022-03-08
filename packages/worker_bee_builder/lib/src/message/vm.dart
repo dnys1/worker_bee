@@ -22,31 +22,6 @@ class VmGenerator extends MessageGenerator {
     );
   }
 
-  static final _typeMap = <String, Reference>{
-    'Uint8List': DartTypes.isolate.transferableTypedData,
-  };
-
-  Expression _convert(
-    Expression value,
-    Reference from, {
-    required bool isNullable,
-  }) {
-    switch (from.symbol) {
-      case 'Uint8List':
-        return DartTypes.isolate.transferableTypedData
-            .newInstanceNamed('fromList', [
-          literalList([value]),
-        ]);
-      case 'TransferableTypedData':
-        return value
-            .property('materialize')
-            .call([])
-            .property('asUint8List')
-            .call([]);
-    }
-    throw ArgumentError('Invalid from: $from');
-  }
-
   /// Isolate entrypoint.
   Method get _runner => Method(
         (m) => m
@@ -62,7 +37,7 @@ ${trueResultType.isVoid ? '' : 'final result ='} await $workerImplName().run(
   channel.stream, 
   channel.sink,
 );
-print('(Worker) Finished${trueResultType.isVoid ? '' : r" with result: $result"}');
+safePrint('(Worker) Finished${trueResultType.isVoid ? '' : r" with result: $result"}');
 ${allocate(DartTypes.isolate.isolate)}.exit(sendPort, ${trueResultType.isVoid ? "'done'" : 'result'});
             '''),
       );

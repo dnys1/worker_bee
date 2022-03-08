@@ -1,6 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:code_builder/code_builder.dart';
-import 'package:collection/collection.dart';
 import 'package:worker_bee_builder/src/type_visitor.dart';
 import 'package:worker_bee_builder/src/types.dart';
 
@@ -15,20 +14,19 @@ class WorkerMessageImpl {
 
 abstract class MessageGenerator {
   MessageGenerator(this.workerEl, this.messageEl, this.resultEl) {
-    _checkCtors(workerEl.constructors);
     workerName = workerEl.name;
     workerImplName = '${workerName}Impl';
     workerType = Reference(
       workerName,
       workerEl.librarySource.uri.toString(),
     );
+    _checkCtors(workerEl.constructors);
 
     if (!messageEl.isAbstract) {
       throw ArgumentError('Message classes must be abstract');
     }
     final messageTypeName = messageEl.name;
-    final messageTypeSourceUri = messageEl.librarySource.uri;
-    messageType = Reference(messageTypeName, messageTypeSourceUri.toString());
+    messageType = messageEl.thisType.accept(symbolVisitor);
     messageTypeImplName = '${messageTypeName}Impl';
 
     messageFields = messageEl.fields;
@@ -39,31 +37,12 @@ abstract class MessageGenerator {
       }
     }
 
-    trueResultType = resultEl?.thisType.accept(const SymbolVisitor()) ??
-        DartTypes.core.void$;
-    // _checkResultType(trueResultType.typeRef);
+    trueResultType =
+        resultEl?.thisType.accept(symbolVisitor) ?? DartTypes.core.void$;
     resultType =
         trueResultType.isVoid ? DartTypes.core.object.nullable : trueResultType;
-  }
-
-  void _checkResultType(TypeReference resultType) {
-    const disallowedTypes = [
-      'BigInt',
-    ];
-    if (resultType.url != null &&
-        resultType.url != '' &&
-        resultType.url != 'dart:core') {
-      throw ArgumentError(
-        'Result type must be a dart:core type or a collection of core types',
-      );
-    }
-    final symbol = resultType.symbol;
-    if (disallowedTypes.contains(symbol)) {
-      throw ArgumentError('Invalid result type: $symbol');
-    }
-
-    for (var ref in resultType.types) {
-      _checkResultType(ref.typeRef);
+    if (trueResultType.symbol == messageType.symbol) {
+      throw StateError('Message and result types should not be the same');
     }
   }
 
@@ -84,8 +63,8 @@ abstract class MessageGenerator {
     if (!hasUnnamed || !hasCreate) {
       throw ArgumentError(
         'Constructors must follow the pattern:\n'
-        'MyWorker();\n'
-        'factory MyWorker.create() = MyWorkerImpl;',
+        '$workerName();\n'
+        'factory $workerName.create() = $workerImplName;',
       );
     }
   }
