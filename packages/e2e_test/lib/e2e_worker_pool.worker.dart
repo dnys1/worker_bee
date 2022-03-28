@@ -1,12 +1,8 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'workers.dart';
-
 // **************************************************************************
-// WorkerHiveGenerator
+// WorkerBeeGenerator
 // **************************************************************************
 
-final workers = <String, WorkerBeeBuilder>{
-  'E2EWorker': E2EWorker.create,
-  'E2EWorkerPool': E2EWorkerPool.create,
-};
+export 'e2e_worker_pool.worker.vm.dart'
+    if (dart.library.html) 'e2e_worker_pool.worker.js.dart';

@@ -73,7 +73,7 @@ E2EMessage get message => E2EMessage(
 
 @WorkerBee()
 abstract class E2EWorker extends WorkerBeeBase<E2EMessage, E2EResult> {
-  E2EWorker() : super(serializers);
+  E2EWorker() : super(serializers: serializers);
   factory E2EWorker.create() = E2EWorkerImpl;
 
   @override
