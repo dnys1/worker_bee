@@ -9,7 +9,8 @@ class VmGenerator extends MessageGenerator {
     ClassElement classEl,
     ClassElement messageEl,
     ClassElement? resultTypeEl,
-  ) : super(classEl, messageEl, resultTypeEl);
+    ClassElement? poolWorkerTypeEl,
+  ) : super(classEl, messageEl, resultTypeEl, poolWorkerTypeEl);
 
   @override
   Library generate() {
@@ -28,17 +29,17 @@ class VmGenerator extends MessageGenerator {
           ..name = '_run'
           ..returns = DartTypes.async.future(DartTypes.core.void$)
           ..requiredParameters.add(Parameter((p) => p
-            ..type = DartTypes.isolate.sendPort
-            ..name = 'sendPort'))
+            ..type = DartTypes.workerBee.sendPorts
+            ..name = 'ports'))
           ..modifier = MethodModifier.async
           ..body = Code.scope((allocate) => '''
-final channel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(messageType)}>.connectSend(sendPort);
+final channel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(DartTypes.core.object)}>.connectSend(ports.messagePort);
 ${trueResultType.isVoid ? '' : 'final result ='} await $workerImplName().run(
-  channel.stream, 
-  channel.sink,
+  channel.stream.cast(), 
+  channel.sink.cast(),
 );
 safePrint('(Worker) Finished${trueResultType.isVoid ? '' : r" with result: $result"}');
-${allocate(DartTypes.isolate.isolate)}.exit(sendPort, ${trueResultType.isVoid ? "'done'" : 'result'});
+${allocate(DartTypes.isolate.isolate)}.exit(ports.exitPort, ${trueResultType.isVoid ? "'done'" : 'result'});
             '''),
       );
 
@@ -59,6 +60,7 @@ ${allocate(DartTypes.isolate.isolate)}.exit(sendPort, ${trueResultType.isVoid ? 
               ..type = MethodType.getter
               ..name = 'vmEntrypoint'
               ..body = refer('_run').code),
+            if (isWorkerPool) factoryGetter,
           ]),
       );
 }

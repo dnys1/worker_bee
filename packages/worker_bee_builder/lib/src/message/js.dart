@@ -4,9 +4,13 @@ import 'package:worker_bee_builder/src/message/common.dart';
 import 'package:worker_bee_builder/src/types.dart';
 
 class JsGenerator extends MessageGenerator {
-  JsGenerator(ClassElement classEl, ClassElement messageEl,
-      ClassElement? resultTypeEl, this.entrypoint)
-      : super(classEl, messageEl, resultTypeEl);
+  JsGenerator(
+    ClassElement classEl,
+    ClassElement messageEl,
+    ClassElement? resultTypeEl,
+    ClassElement? poolWorkerTypeEl,
+    this.entrypoint,
+  ) : super(classEl, messageEl, resultTypeEl, poolWorkerTypeEl);
 
   final String entrypoint;
 
@@ -37,6 +41,7 @@ class JsGenerator extends MessageGenerator {
               ..type = MethodType.getter
               ..name = 'jsEntrypoint'
               ..body = literalString(entrypoint).code),
+            if (isWorkerPool) factoryGetter,
           ]),
       );
 }
