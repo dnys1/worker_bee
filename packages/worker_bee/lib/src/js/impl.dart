@@ -27,42 +27,45 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   @override
   @nonVirtual
   Future<void> connect() async {
-    await runZonedGuarded(
-      () => _connectMemoizer.runOnce(() async {
-        safePrint('(Worker) Connecting from worker...');
-        final channel = StreamChannelController<Object>(sync: true);
-        self.addEventListener(
-          'message',
-          (Event event) {
-            event as MessageEvent;
-            safePrint('(Worker) Got message: ${event.data}');
-            final serialized = event.data as Object?;
-            final message = deserialize<Message>(serialized);
-            channel.foreign.sink.add(message);
-          },
-        );
-        channel.foreign.stream.listen((message) {
-          safePrint('(Worker) Sending message: $message');
-          self.postMessage(serialize(message));
-        });
-        safePrint('(Worker) Sending ready event');
-        self.postMessage('ready');
-        final result = await run(
-          channel.local.stream.cast(),
-          channel.local.sink.cast(),
-        );
-        safePrint('(Worker) Finished with result: $result');
-        self.postMessage('done');
-        self.postMessage(serialize(result));
-      }),
-      (Object error, StackTrace stack) {
-        safePrint('(Worker) An unexpected error occurred.');
-        self.postMessage(serialize(WebWorkerException(
-          error.toString(),
-          stackTrace: stack,
-        )));
-      },
-    );
+    await _connectMemoizer.runOnce(() {
+      return Chain.capture(
+        () async {
+          safePrint('(Worker) Connecting from worker...');
+          final channel = StreamChannelController<Object>(sync: true);
+          self.addEventListener(
+            'message',
+            (Event event) {
+              event as MessageEvent;
+              safePrint('(Worker) Got message: ${event.data}');
+              final serialized = event.data as Object?;
+              final message = deserialize<Message>(serialized);
+              channel.foreign.sink.add(message);
+            },
+          );
+          channel.foreign.stream.listen((message) {
+            safePrint('(Worker) Sending message: $message');
+            self.postMessage(serialize(message));
+          });
+          safePrint('(Worker) Sending ready event');
+          self.postMessage('ready');
+          final result = await run(
+            channel.local.stream.cast(),
+            channel.local.sink.cast(),
+          );
+          safePrint('(Worker) Finished with result: $result');
+          self.postMessage('done');
+          self.postMessage(serialize(result));
+        },
+        onError: (Object error, Chain stackTrace) {
+          safePrint('(Worker) An unexpected error occurred.');
+          // ignore: only_throw_errors
+          throw serialize(WebWorkerException(
+            error.toString(),
+            stackTrace: stackTrace,
+          )) as Object;
+        },
+      );
+    });
   }
 
   @override
@@ -170,8 +173,11 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         // reported back _unless_ we serialize them first.
         onError: (error, chain) {
           final workerException = WorkerBeeExceptionImpl(error, chain);
-          // ignore: only_throw_errors
-          throw serialize(workerException) as Object;
+          if (isWebWorker) {
+            // ignore: only_throw_errors
+            throw serialize(workerException) as Object;
+          }
+          throw workerException;
         },
       );
     });
