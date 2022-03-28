@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
-import 'package:stream_channel/stream_channel.dart';
+import 'package:worker_bee/src/exception/stack_trace_serializer.dart';
+import 'package:worker_bee/src/exception/worker_bee_exception.dart';
+import 'package:worker_bee/worker_bee.dart';
 
 /// {@template worker_bee.worker_bee_common}
 /// The common (platform-agnostic) implementations for a worker bee.
@@ -13,7 +15,11 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     with StreamChannelMixin<Message> {
   /// {@template worker_bee.worker_bee_common}
   WorkerBeeCommon([Serializers? serializers])
-      : _serializers = serializers ?? Serializers() {
+      : _serializers = ((serializers ?? Serializers()).toBuilder()
+              ..add(WebWorkerException.serializer)
+              ..add(WorkerBeeExceptionImpl.serializer)
+              ..add(const StackTraceSerializer()))
+            .build() {
     _checkSerializers();
   }
 
