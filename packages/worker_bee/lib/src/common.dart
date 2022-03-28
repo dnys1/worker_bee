@@ -12,7 +12,7 @@ import 'package:worker_bee/worker_bee.dart';
 /// The actual base class mixes in platform-specific code to this class.
 /// {@endtemplate}
 abstract class WorkerBeeCommon<Message extends Object, Result>
-    with StreamChannelMixin<Message> {
+    implements StreamSink<Message> {
   /// {@template worker_bee.worker_bee_common}
   WorkerBeeCommon([Serializers? serializers])
       : _serializers = ((serializers ?? Serializers()).toBuilder()
@@ -64,7 +64,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// > Should not be called directly! Use [spawn] to spawn a worker, and use [stream]
   /// > and [sink] to communicate with it.
   @protected
-  Future<Result> run(Stream<Message> listen, StreamSink<Message> respond);
+  Future<Result> run(Stream<Message> listen, StreamSink<Result> respond);
 
   /// Starts a remote worker and waits for it to connect.
   ///
@@ -76,57 +76,82 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Should only be called from a worker bee.
   Future<void> connect();
 
-  StreamChannel<Message>? _channel;
-
   /// The asynchronous ready trigger.
   @protected
   final Completer<void> ready = Completer();
 
-  final Completer<Result> _resultCompleter = Completer.sync();
+  final StreamSinkCompleter<Message> _sinkCompleter = StreamSinkCompleter();
+  final StreamCompleter<Result> _streamCompleter = StreamCompleter();
+  final Completer<async.Result<Result>> _resultCompleter = Completer.sync();
+
+  /// Whether the worker bee has been completed and/or is closed.
+  bool get isCompleted => _resultCompleter.isCompleted;
 
   /// Internal method for completing successfully with a result.
   @protected
   void complete(Result result) {
-    if (!_resultCompleter.isCompleted) {
-      _resultCompleter.complete(result);
+    if (!isCompleted) {
+      _resultCompleter.complete(async.Result.value(result));
     }
+    close();
   }
 
   /// Internal method for completing with an error.
   @protected
   void completeError(Object error, [StackTrace? stackTrace]) {
-    if (!_resultCompleter.isCompleted) {
-      _resultCompleter.completeError(error, stackTrace);
+    if (!isCompleted) {
+      _resultCompleter.complete(async.Result.error(error, stackTrace));
     }
+    close();
   }
 
-  @override
-  StreamSink<Message> get sink {
-    if (_channel == null) {
-      throw StateError('Must call start first');
-    }
-    return _channel!.sink;
-  }
+  late final Stream<Result> _stream =
+      _streamCompleter.stream.asBroadcastStream();
 
-  late final Stream<Message> _stream = _channel!.stream.asBroadcastStream();
+  /// The stream of responses.
+  Stream<Result> get stream => _stream;
 
-  @override
-  Stream<Message> get stream {
-    if (_channel == null) {
-      throw StateError('Must call start first');
-    }
-    return _stream;
-  }
-
-  /// Sets the stream channel for communication.
   @protected
-  set channel(StreamChannel<Message> channel) {
-    if (_channel != null) {
-      throw StateError('Channel has already been set');
-    }
-    _channel = channel;
+  set stream(Stream<Result> stream) {
+    _streamCompleter.setSourceStream(stream);
+  }
+
+  /// The sink for requests.
+  StreamSink<Message> get sink => _sinkCompleter.sink;
+
+  @protected
+  set sink(StreamSink<Message> sink) {
+    _sinkCompleter.setDestinationSink(sink);
   }
 
   /// The result of the worker bee's computation.
-  Future<Result> get result => _resultCompleter.future;
+  Future<async.Result<Result>> get result => _resultCompleter.future;
+
+  @override
+  void add(Message event) => sink.add(event);
+
+  @override
+  void addError(Object error, [StackTrace? stackTrace]) =>
+      sink.addError(error, stackTrace);
+
+  @override
+  Future<void> addStream(Stream<Message> stream) => sink.addStream(stream);
+
+  final _closeMemoizer = AsyncMemoizer<void>();
+
+  @override
+  @mustCallSuper
+  Future<void> close() {
+    // Multiple calls to the memoizer in the same event loop causes this to
+    // throw a StateError.
+    //
+    // Call in the next event loop to avoid.
+    return Future(() => _closeMemoizer.runOnce(() async {
+          safePrint('(Main) Closing worker');
+          await sink.close();
+        }));
+  }
+
+  @override
+  Future<void> get done => sink.done;
 }

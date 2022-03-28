@@ -1,6 +1,9 @@
 ///
 library worker_bee;
 
+import 'dart:async';
+
+import 'package:async/async.dart';
 import 'package:built_value/serializer.dart';
 import 'package:worker_bee/src/common.dart';
 
@@ -66,5 +69,9 @@ abstract class WorkerBeeBase<Message extends Object, Result>
     extends WorkerBeeCommon<Message, Result>
     with WorkerBeeImpl<Message, Result> {
   /// {@macro worker_bee.worker_bee_base}
-  WorkerBeeBase([Serializers? serializers]) : super(serializers);
+
+/// Helper for casting [StreamSink]s.
+extension CastStreamSink<I> on StreamSink<I> {
+  /// Casts the sink to another type.
+  StreamSink<O> cast<O>() => transform(StreamSinkTransformer.fromHandlers());
 }

@@ -1,16 +1,18 @@
 import 'package:e2e_test/e2e_worker.dart';
 import 'package:test/test.dart';
+import 'package:worker_bee/worker_bee.dart';
 
 Future<void> testWorker({String? jsEntrypoint}) async {
   final _message = message;
 
   final worker = E2EWorker.create();
   await worker.spawn(jsEntrypoint: jsEntrypoint);
-  worker.sink.add(_message);
+  worker.add(_message);
 
-  final messages = await worker.stream.take(2).toList();
+  final messages = await worker.stream.take(1).toList();
   final result = await worker.result;
-  for (final workerMessage in [...messages, result.message]) {
+  for (final workerMessage
+      in [...messages, result.asValue!.value].map((el) => el.message)) {
     expect(workerMessage.bigInt, equals(_message.bigInt));
     expect(workerMessage.bool_, equals(_message.bool_));
     expect(workerMessage.builtList.toList(),
