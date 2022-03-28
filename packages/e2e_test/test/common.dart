@@ -35,7 +35,6 @@ Future<void> testWorker({String? jsEntrypoint}) async {
 }
 
 Future<void> testWorkerPool({String? jsEntrypoint}) async {
-  const numWorkers = 5;
   final sink = NullStreamSink<E2EResult>();
   final workerPool = WorkerPool<E2EMessage, E2EResult, E2EWorker>(
     numWorkers,
