@@ -21,13 +21,13 @@ abstract class MyMessage implements Built<MyMessage, MyMessageBuilder> {
 
 @WorkerBee('main.dart.js')
 abstract class MyWorker extends WorkerBeeBase<MyMessage, String> {
-  MyWorker() : super(serializers);
+  MyWorker() : super(serializers: serializers);
   factory MyWorker.create() = MyWorkerImpl;
 
   @override
   Future<String> run(
     Stream<MyMessage> listen,
-    StreamSink<MyMessage> respond,
+    StreamSink<String> respond,
   ) async {
     final messageToEncode = await listen.first;
     return base64Encode(messageToEncode.data);

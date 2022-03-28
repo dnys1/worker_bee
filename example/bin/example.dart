@@ -24,7 +24,10 @@ void main(List<String> args) async {
       MyMessage((b) => b..data = Uint8List.fromList(utf8.encode(textToEncode))),
     );
     final result = await worker.result;
-    print('(Main) Got result: $result');
+    if (result is ErrorResult) {
+      throw result.error;
+    }
+    print('(Main) Got result: ${(result as ValueResult).value}');
     exit(0);
   });
 }

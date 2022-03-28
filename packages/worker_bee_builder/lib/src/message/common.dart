@@ -13,7 +13,13 @@ class WorkerMessageImpl {
 }
 
 abstract class MessageGenerator {
-  MessageGenerator(this.workerEl, this.messageEl, this.resultEl) {
+  MessageGenerator(
+    this.workerEl,
+    this.messageEl,
+    this.resultEl,
+    this.poolWorkerTypeEl,
+  ) {
+    isWorkerPool = workerEl.supertype!.element.name == 'WorkerPoolBase';
     workerName = workerEl.name;
     workerImplName = '${workerName}Impl';
     workerType = Reference(
@@ -44,6 +50,10 @@ abstract class MessageGenerator {
     if (trueResultType.symbol == messageType.symbol) {
       throw StateError('Message and result types should not be the same');
     }
+
+    if (isWorkerPool) {
+      poolWorkerType = poolWorkerTypeEl!.thisType.accept(symbolVisitor);
+    }
   }
 
   void _checkCtors(List<ConstructorElement> ctors) {
@@ -69,15 +79,28 @@ abstract class MessageGenerator {
     }
   }
 
+  Method get factoryGetter => Method(
+        (m) => m
+          ..annotations.add(DartTypes.core.override)
+          ..returns = FunctionType((b) => b..returnType = poolWorkerType)
+          ..name = 'factory'
+          ..type = MethodType.getter
+          ..lambda = true
+          ..body = poolWorkerType.property('create').code,
+      );
+
   final symbolVisitor = const SymbolVisitor();
   final ClassElement workerEl;
   final ClassElement messageEl;
   final ClassElement? resultEl;
+  final ClassElement? poolWorkerTypeEl;
 
+  late final bool isWorkerPool;
   late final String workerName;
   late final String workerImplName;
   late final Reference workerType;
   late final Reference messageType;
+  late final Reference poolWorkerType;
   late final String messageTypeImplName;
   late final List<FieldElement> messageFields;
   late final Reference trueResultType;

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:worker_bee/worker_bee.dart';
 
-import 'vm/preamble.dart' if (dart.library.html) 'js/preamble.dart';
+export 'vm/preamble.dart' if (dart.library.html) 'js/preamble.dart';
 
 /// Factory for a worker bee.
 typedef WorkerBeeBuilder<W extends WorkerBeeBase<Object, dynamic>> = W

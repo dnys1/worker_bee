@@ -31,12 +31,14 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
 
     // Get generic arguments
     final supertype = element.supertype;
-    if (supertype == null || supertype.element.name != 'WorkerBeeBase') {
+    if (supertype == null ||
+        (supertype.element.name != 'WorkerBeeBase' &&
+            supertype.element.name != 'WorkerPoolBase')) {
       throw ArgumentError(
           '@WorkerBee classes must extends WorkerBeeBase<M, R>.');
     }
     final typeArgs = supertype.typeArguments;
-    if (typeArgs.length != 2) {
+    if (typeArgs.length < 2) {
       throw ArgumentError('@WorkerBee classes must declare their types.');
     }
 
@@ -51,11 +53,16 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
 
     final resultType = typeArgs[1];
     final resultTypeEl = resultType.element;
+
+    final poolWorkerType = typeArgs.length == 3 ? typeArgs[2] : null;
+    final poolWorkerTypeEl = poolWorkerType?.element;
+
     final jsEntrypoint = annotation.read('jsEntrypoint').stringValue;
     final messageImpls = generateMessages(
       element,
       messageTypeEl,
       resultTypeEl as ClassElement?,
+      poolWorkerTypeEl as ClassElement?,
       jsEntrypoint,
     );
 
@@ -74,17 +81,20 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
     ClassElement workerEl,
     ClassElement messageTypeEl,
     ClassElement? resultTypeEl,
+    ClassElement? poolWorkerTypeEl,
     String jsEntrypoint,
   ) {
     final vmClass = VmGenerator(
       workerEl,
       messageTypeEl,
       resultTypeEl,
+      poolWorkerTypeEl,
     ).generate();
     final jsClass = JsGenerator(
       workerEl,
       messageTypeEl,
       resultTypeEl,
+      poolWorkerTypeEl,
       jsEntrypoint,
     ).generate();
 

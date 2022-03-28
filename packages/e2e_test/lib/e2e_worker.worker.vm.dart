@@ -4,14 +4,14 @@ import 'dart:isolate';
 import 'package:e2e_test/e2e_worker.dart';
 import 'package:worker_bee/worker_bee.dart';
 
-Future<void> _run(SendPort sendPort) async {
-  final channel = IsolateChannel<E2EMessage>.connectSend(sendPort);
+Future<void> _run(SendPorts ports) async {
+  final channel = IsolateChannel<Object>.connectSend(ports.messagePort);
   final result = await E2EWorkerImpl().run(
-    channel.stream,
-    channel.sink,
+    channel.stream.cast(),
+    channel.sink.cast(),
   );
   safePrint('(Worker) Finished with result: $result');
-  Isolate.exit(sendPort, result);
+  Isolate.exit(ports.exitPort, result);
 }
 
 class E2EWorkerImpl extends E2EWorker {
