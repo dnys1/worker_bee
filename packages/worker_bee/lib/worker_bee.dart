@@ -1,4 +1,4 @@
-///
+/// Multi-platform workers for Dart (Web, VM).
 library worker_bee;
 
 import 'dart:async';
@@ -17,6 +17,7 @@ export 'src/exception/worker_bee_exception.dart' show WorkerBeeException;
 export 'src/preamble.dart';
 export 'src/util.dart';
 export 'src/worker_bee_vm.dart' if (dart.library.html) 'src/worker_bee_js.dart';
+export 'src/worker_pool.dart';
 
 /// {@template worker_bee.worker_bee}
 /// Annotation class for marking worker bees.
@@ -69,6 +70,8 @@ abstract class WorkerBeeBase<Message extends Object, Result>
     extends WorkerBeeCommon<Message, Result>
     with WorkerBeeImpl<Message, Result> {
   /// {@macro worker_bee.worker_bee_base}
+  WorkerBeeBase({Serializers? serializers}) : super(serializers);
+}
 
 /// Helper for casting [StreamSink]s.
 extension CastStreamSink<I> on StreamSink<I> {

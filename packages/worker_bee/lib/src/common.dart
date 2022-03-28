@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:async/async.dart' as async;
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 import 'package:worker_bee/src/exception/stack_trace_serializer.dart';
