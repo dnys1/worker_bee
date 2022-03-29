@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:html';
 
 import 'package:meta/meta.dart';
+import 'package:path/path.dart' as path;
 import 'package:stack_trace/stack_trace.dart';
 import 'package:worker_bee/src/common.dart';
 import 'package:worker_bee/src/exception/worker_bee_exception.dart';
@@ -77,8 +78,21 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           final entrypoint = jsEntrypoint ?? this.jsEntrypoint;
           safePrint('(Main) Spawning worker at $entrypoint...');
 
-          // Spawn the worker using the main script.
-          final worker = Worker(entrypoint);
+          // Spawn the worker using the specified script.
+          Worker worker;
+          try {
+            worker = Worker(entrypoint);
+          } on Object {
+            // If `entrypoint` contains a path, try again at the root to
+            // account for Dart vs. Flutter semantics when deploying Web apps.
+            try {
+              worker = Worker(path.basename(entrypoint));
+            } on Object {
+              throw WebWorkerException(
+                'Could not launch web worker at $entrypoint.',
+              );
+            }
+          }
 
           // Whether `run` has completed on the web worker.
           var done = false;
@@ -89,7 +103,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             sync: true,
             onCancel: () {
               if (!done) {
-                completeError(Exception('Worker quit unexpectedly'));
+                completeError(WebWorkerException('Worker quit unexpectedly'));
               }
             },
           );
@@ -172,7 +186,9 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         // of a worker pool, any uncaught errors lose visibility when they're
         // reported back _unless_ we serialize them first.
         onError: (error, chain) {
-          final workerException = WorkerBeeExceptionImpl(error, chain);
+          final workerException = error is WorkerBeeException
+              ? error.rebuild((b) => b.stackTrace = chain)
+              : WorkerBeeExceptionImpl(error, chain);
           if (isWebWorker) {
             // ignore: only_throw_errors
             throw serialize(workerException) as Object;

@@ -14,6 +14,9 @@ abstract class WorkerBeeException implements Exception {
 
   /// The stack trace associated with this exception.
   StackTrace? get stackTrace;
+
+  /// Rebuilds the worker bee exception using the provided builder.
+  WorkerBeeException rebuild(void Function(WorkerBeeExceptionBuilder) b);
 }
 
 /// {@macro worker_bee.web_worker_exception}

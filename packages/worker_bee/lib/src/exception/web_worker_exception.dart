@@ -36,10 +36,4 @@ abstract class WebWorkerException
   /// The [WebWorkerException] serializer.
   static Serializer<WebWorkerException> get serializer =>
       _$webWorkerExceptionSerializer;
-
-  @override
-  String toString() =>
-      'WebWorkerException{$error' +
-      (filename != null ? ' ($filename:$lineNo)' : '') +
-      '}';
 }

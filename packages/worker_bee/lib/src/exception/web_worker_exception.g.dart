@@ -129,6 +129,16 @@ class _$WebWorkerException extends WebWorkerException {
         $jc($jc($jc(0, filename.hashCode), lineNo.hashCode), error.hashCode),
         stackTrace.hashCode));
   }
+
+  @override
+  String toString() {
+    return (newBuiltValueToStringHelper('WebWorkerException')
+          ..add('filename', filename)
+          ..add('lineNo', lineNo)
+          ..add('error', error)
+          ..add('stackTrace', stackTrace))
+        .toString();
+  }
 }
 
 class WebWorkerExceptionBuilder
