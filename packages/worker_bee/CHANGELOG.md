@@ -1,3 +1,7 @@
+## 0.3.1
+
+- fix: Update path dependency
+
 ## 0.3.0
 
 - feat: Worker pools
