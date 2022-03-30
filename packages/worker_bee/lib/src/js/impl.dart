@@ -50,7 +50,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           safePrint('(Worker) Sending ready event');
           self.postMessage('ready');
           final result = await run(
-            channel.local.stream.cast(),
+            channel.local.stream.asBroadcastStream().cast(),
             channel.local.sink.cast(),
           );
           safePrint('(Worker) Finished with result: $result');
@@ -59,11 +59,10 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         },
         onError: (Object error, Chain stackTrace) {
           safePrint('(Worker) An unexpected error occurred.');
-          // ignore: only_throw_errors
-          throw serialize(WebWorkerException(
+          self.postMessage(serialize(WebWorkerException(
             error.toString(),
             stackTrace: stackTrace,
-          )) as Object;
+          )));
         },
       );
     });
@@ -111,16 +110,16 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           // Listen for error messages on the worker.
           worker.addEventListener('messageerror', (Event event) {
             event as MessageEvent;
-            final error = WebWorkerException(
+            final error = serialize(WebWorkerException(
               'Could not serialize message: ${event.data}',
-            );
+            )) as Object;
             controller.addError(error);
             completeError(error);
           });
           worker.onError.listen((Event event) {
             final eventJson = JSON.stringify(event);
             safePrint('(Main) Error from worker: $eventJson');
-            WebWorkerException error;
+            Object error;
             if (event is ErrorEvent) {
               error = WebWorkerException(
                 event.message ?? eventJson,
@@ -130,6 +129,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             } else {
               error = WebWorkerException(eventJson);
             }
+            error = serialize(error) as Object;
             controller.addError(error);
             completeError(error);
           });
@@ -158,8 +158,9 @@ mixin WorkerBeeImpl<Message extends Object, Result>
               }
             }
             final serialized = event.data as Object?;
-            final message = deserialize(serialized);
+            var message = deserialize(serialized);
             if (message is WebWorkerException) {
+              message = serialize(message) as Object;
               controller.addError(message);
               completeError(message);
               return;

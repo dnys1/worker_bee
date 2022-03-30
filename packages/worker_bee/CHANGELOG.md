@@ -1,3 +1,7 @@
+## 0.3.2
+
+- fix: JS fixes
+- 
 ## 0.3.1
 
 - fix: Update path dependency
