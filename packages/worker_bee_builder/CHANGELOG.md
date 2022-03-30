@@ -1,3 +1,9 @@
+## 0.3.0
+
+- feat: Worker pools
+- chore!: Change signatures to match `StreamSink<Message>`, `Stream<Result>` 
+- chore: Improved error handling
+
 ## 0.1.1
 
 - feat: Add hive builder
