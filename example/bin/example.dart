@@ -23,11 +23,8 @@ void main(List<String> args) async {
     worker.sink.add(
       MyMessage((b) => b..data = Uint8List.fromList(utf8.encode(textToEncode))),
     );
-    final result = await worker.result;
-    if (result is ErrorResult) {
-      throw result.error;
-    }
-    print('(Main) Got result: ${(result as ValueResult).value}');
+    final result = await Result.release(worker.result);
+    print('(Main) Got result: $result');
     exit(0);
   });
 }

@@ -13,11 +13,7 @@ Future<String> computeBase64(String text) async {
   worker.sink.add(MyMessage(
     (b) => b..data = Uint8List.fromList(utf8.encode(text)),
   ));
-  final result = await worker.result;
-  if (result is ErrorResult) {
-    throw result.error;
-  }
-  return (result as ValueResult).value;
+  return Result.release(worker.result);
 }
 
 @WorkerHive([
