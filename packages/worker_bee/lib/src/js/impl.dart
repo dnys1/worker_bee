@@ -38,9 +38,6 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   @override
   void completeError(Object error, [StackTrace? stackTrace]) {
     error = serialize(error) as Object;
-    if (_controller != null && !_controller!.isClosed) {
-      _controller!.addError(error, stackTrace);
-    }
     if (isWebWorker) {
       self.postMessage(error);
     }
@@ -110,7 +107,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             worker = Worker(entrypoint);
           } on Object {
             final rootEntrypoint = path.basename(entrypoint);
-            logger.severe('Worker not found. Trying again at $rootEntrypoint');
+            logger.severe('Worker not found. Trying at $rootEntrypoint');
             // If `entrypoint` contains a path, try again at the root to
             // account for Dart vs. Flutter semantics when deploying Web apps.
             try {
@@ -226,10 +223,10 @@ mixin WorkerBeeImpl<Message extends Object, Result>
 
   @override
   Future<void> close() async {
-    _worker?.terminate();
-    _worker = null;
     _controller?.close();
     _controller = null;
+    _worker?.terminate();
+    _worker = null;
     await super.close();
   }
 }

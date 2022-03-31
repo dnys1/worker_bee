@@ -48,8 +48,9 @@ Future<Tuple2<String, StreamChannel<LogMessage>>> getWorkerAssignment() async {
     eventListener = (Event event) {
       event as MessageEvent;
       final Object? message = event.data;
-      final Object? messagePort = event.ports.firstOrNull;
+      final MessagePort? messagePort = event.ports.firstOrNull;
       if (message is String && messagePort is MessagePort) {
+        self.removeEventListener('message', eventListener);
         assignmentCompleter.complete(Tuple2(message, messagePort));
       } else {
         assignmentCompleter.completeError(StateError(
@@ -64,6 +65,5 @@ Future<Tuple2<String, StreamChannel<LogMessage>>> getWorkerAssignment() async {
     assignment.item1,
     MessagePortChannel<LogMessage>(assignment.item2),
   );
-  self.removeEventListener('message', eventListener);
   return result;
 }

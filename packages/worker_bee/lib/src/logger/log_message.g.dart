@@ -6,86 +6,61 @@ part of 'log_message.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-const LogLevel _$all = const LogLevel._('all');
-const LogLevel _$off = const LogLevel._('off');
-const LogLevel _$shout = const LogLevel._('shout');
-const LogLevel _$severe = const LogLevel._('severe');
-const LogLevel _$warning = const LogLevel._('warning');
-const LogLevel _$info = const LogLevel._('info');
-const LogLevel _$config = const LogLevel._('config');
-const LogLevel _$fine = const LogLevel._('fine');
-const LogLevel _$finer = const LogLevel._('finer');
-const LogLevel _$finest = const LogLevel._('finest');
+const LogLevel _$ALL = const LogLevel._('ALL');
+const LogLevel _$OFF = const LogLevel._('OFF');
+const LogLevel _$SHOUT = const LogLevel._('SHOUT');
+const LogLevel _$SEVERE = const LogLevel._('SEVERE');
+const LogLevel _$WARNING = const LogLevel._('WARNING');
+const LogLevel _$INFO = const LogLevel._('INFO');
+const LogLevel _$CONFIG = const LogLevel._('CONFIG');
+const LogLevel _$FINE = const LogLevel._('FINE');
+const LogLevel _$FINER = const LogLevel._('FINER');
+const LogLevel _$FINEST = const LogLevel._('FINEST');
 
 LogLevel _$valueOf(String name) {
   switch (name) {
-    case 'all':
-      return _$all;
-    case 'off':
-      return _$off;
-    case 'shout':
-      return _$shout;
-    case 'severe':
-      return _$severe;
-    case 'warning':
-      return _$warning;
-    case 'info':
-      return _$info;
-    case 'config':
-      return _$config;
-    case 'fine':
-      return _$fine;
-    case 'finer':
-      return _$finer;
-    case 'finest':
-      return _$finest;
+    case 'ALL':
+      return _$ALL;
+    case 'OFF':
+      return _$OFF;
+    case 'SHOUT':
+      return _$SHOUT;
+    case 'SEVERE':
+      return _$SEVERE;
+    case 'WARNING':
+      return _$WARNING;
+    case 'INFO':
+      return _$INFO;
+    case 'CONFIG':
+      return _$CONFIG;
+    case 'FINE':
+      return _$FINE;
+    case 'FINER':
+      return _$FINER;
+    case 'FINEST':
+      return _$FINEST;
     default:
       throw new ArgumentError(name);
   }
 }
 
 final BuiltSet<LogLevel> _$values = new BuiltSet<LogLevel>(const <LogLevel>[
-  _$all,
-  _$off,
-  _$shout,
-  _$severe,
-  _$warning,
-  _$info,
-  _$config,
-  _$fine,
-  _$finer,
-  _$finest,
+  _$ALL,
+  _$OFF,
+  _$SHOUT,
+  _$SEVERE,
+  _$WARNING,
+  _$INFO,
+  _$CONFIG,
+  _$FINE,
+  _$FINER,
+  _$FINEST,
 ]);
 
 Serializer<LogLevel> _$logLevelSerializer = new _$LogLevelSerializer();
 Serializer<LogMessage> _$logMessageSerializer = new _$LogMessageSerializer();
 
 class _$LogLevelSerializer implements PrimitiveSerializer<LogLevel> {
-  static const Map<String, Object> _toWire = const <String, Object>{
-    'all': 'ALL',
-    'off': 'OFF',
-    'shout': 'SHOUT',
-    'severe': 'SEVERE',
-    'warning': 'WARNING',
-    'info': 'INFO',
-    'config': 'CONFIG',
-    'fine': 'FINE',
-    'finer': 'FINER',
-    'finest': 'FINEST',
-  };
-  static const Map<Object, String> _fromWire = const <Object, String>{
-    'ALL': 'all',
-    'OFF': 'off',
-    'SHOUT': 'shout',
-    'SEVERE': 'severe',
-    'WARNING': 'warning',
-    'INFO': 'info',
-    'CONFIG': 'config',
-    'FINE': 'fine',
-    'FINER': 'finer',
-    'FINEST': 'finest',
-  };
-
   @override
   final Iterable<Type> types = const <Type>[LogLevel];
   @override
@@ -94,13 +69,12 @@ class _$LogLevelSerializer implements PrimitiveSerializer<LogLevel> {
   @override
   Object serialize(Serializers serializers, LogLevel object,
           {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+      object.name;
 
   @override
   LogLevel deserialize(Serializers serializers, Object serialized,
           {FullType specifiedType = FullType.unspecified}) =>
-      LogLevel.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+      LogLevel.valueOf(serialized as String);
 }
 
 class _$LogMessageSerializer implements StructuredSerializer<LogMessage> {

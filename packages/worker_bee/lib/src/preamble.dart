@@ -17,7 +17,6 @@ Future<void> runHive<R>(
   FutureOr<void> Function()? runApp,
 ]) async {
   if (isWebWorker) {
-    safePrint('(Worker) Getting assignment...');
     final assignment = await getWorkerAssignment();
     final worker = workers[assignment.item1];
     if (worker == null) {
@@ -25,7 +24,6 @@ Future<void> runHive<R>(
     }
     await worker().connect(logsChannel: assignment.item2);
   } else {
-    safePrint('(Main) Not a web worker. Running app...');
     await runApp?.call();
   }
 }

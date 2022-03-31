@@ -19,13 +19,21 @@ void main(List<String> args) async {
     }
 
     final worker = MyWorker.create();
-    worker.logs.listen(print);
+    worker.logs.listen((log) {
+      print('[${log.level}] (${log.workerName}) ${log.message}');
+      if (log.error != null) {
+        print(log.error);
+      }
+      if (log.stackTrace != null) {
+        print(log.stackTrace);
+      }
+    });
     await worker.spawn();
     worker.sink.add(
       MyMessage((b) => b..data = Uint8List.fromList(utf8.encode(textToEncode))),
     );
     final result = await Result.release(worker.result);
-    print('(Main) Got result: $result');
+    print('Got result: $result');
     exit(0);
   });
 }

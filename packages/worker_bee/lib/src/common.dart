@@ -160,9 +160,9 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Internal method for completing successfully with a result.
   @protected
   void complete(Result result) {
-    if (!isCompleted) {
-      _resultCompleter.complete(async.Result.value(result));
-    }
+    if (isCompleted) return;
+    logger.fine('Finished with result: $result');
+    _resultCompleter.complete(async.Result.value(result));
     close();
   }
 
@@ -170,9 +170,8 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   @protected
   void completeError(Object error, [StackTrace? stackTrace]) {
     logger.severe('Error in worker', error, stackTrace);
-    if (!isCompleted) {
-      _resultCompleter.complete(async.Result.error(error, stackTrace));
-    }
+    if (isCompleted) return;
+    _resultCompleter.complete(async.Result.error(error, stackTrace));
     close();
   }
 

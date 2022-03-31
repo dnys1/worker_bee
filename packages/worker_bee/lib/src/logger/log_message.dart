@@ -8,44 +8,34 @@ part 'log_message.g.dart';
 /// Log levels, mirroring those in `package:logging`.
 class LogLevel extends EnumClass {
   /// Log level `ALL`
-  @BuiltValueEnumConst(wireName: 'ALL')
-  static const LogLevel all = _$all;
+  static const LogLevel ALL = _$ALL;
 
   /// Log level `OFF`
-  @BuiltValueEnumConst(wireName: 'OFF')
-  static const LogLevel off = _$off;
+  static const LogLevel OFF = _$OFF;
 
   /// Log level `SHOUT`
-  @BuiltValueEnumConst(wireName: 'SHOUT')
-  static const LogLevel shout = _$shout;
+  static const LogLevel SHOUT = _$SHOUT;
 
   /// Log level `SEVERE`
-  @BuiltValueEnumConst(wireName: 'SEVERE')
-  static const LogLevel severe = _$severe;
+  static const LogLevel SEVERE = _$SEVERE;
 
   /// Log level `WARNING`
-  @BuiltValueEnumConst(wireName: 'WARNING')
-  static const LogLevel warning = _$warning;
+  static const LogLevel WARNING = _$WARNING;
 
   /// Log level `INFO`
-  @BuiltValueEnumConst(wireName: 'INFO')
-  static const LogLevel info = _$info;
+  static const LogLevel INFO = _$INFO;
 
   /// Log level `CONFIG`
-  @BuiltValueEnumConst(wireName: 'CONFIG')
-  static const LogLevel config = _$config;
+  static const LogLevel CONFIG = _$CONFIG;
 
   /// Log level `FINE`
-  @BuiltValueEnumConst(wireName: 'FINE')
-  static const LogLevel fine = _$fine;
+  static const LogLevel FINE = _$FINE;
 
   /// Log level `FINER`
-  @BuiltValueEnumConst(wireName: 'FINER')
-  static const LogLevel finer = _$finer;
+  static const LogLevel FINER = _$FINER;
 
   /// Log level `FINEST`
-  @BuiltValueEnumConst(wireName: 'FINEST')
-  static const LogLevel finest = _$finest;
+  static const LogLevel FINEST = _$FINEST;
 
   const LogLevel._(String name) : super(name);
 
@@ -57,6 +47,9 @@ class LogLevel extends EnumClass {
 
   /// The [LogLevel] serializer.
   static Serializer<LogLevel> get serializer => _$logLevelSerializer;
+
+  @override
+  String toString() => name;
 }
 
 /// {@template worker_bee.log_message}
@@ -78,7 +71,7 @@ abstract class LogMessage implements Built<LogMessage, LogMessageBuilder> {
           ..workerName = workerName
           ..message = record.message
           ..local = local
-          ..level = LogLevel.valueOf(record.level.name.toLowerCase())
+          ..level = LogLevel.valueOf(record.level.name)
           ..error = record.error?.toString()
           ..stackTrace = record.stackTrace,
       );
@@ -104,3 +97,5 @@ abstract class LogMessage implements Built<LogMessage, LogMessageBuilder> {
   /// The [LogMessage] serializer, for use in built_value.
   static Serializer<LogMessage> get serializer => _$logMessageSerializer;
 }
+
+// ignore_for_file: constant_identifier_names

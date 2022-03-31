@@ -17,7 +17,6 @@ export 'src/exception/web_worker_exception.dart';
 export 'src/exception/worker_bee_exception.dart' show WorkerBeeException;
 export 'src/logger/log_message.dart';
 export 'src/preamble.dart';
-export 'src/util.dart';
 export 'src/worker_bee_vm.dart' if (dart.library.html) 'src/worker_bee_js.dart';
 export 'src/worker_pool.dart';
 
