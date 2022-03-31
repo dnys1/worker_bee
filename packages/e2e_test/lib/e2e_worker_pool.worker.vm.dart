@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:core';
 import 'dart:isolate';
 
@@ -16,6 +17,7 @@ Future<void> _run(SendPorts ports) async {
   );
 // ignore: invalid_use_of_protected_member
   worker.logger.info('Finished');
+  unawaited(worker.close());
   Isolate.exit(ports.exitPort, result);
 }
 

@@ -164,7 +164,6 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           // ignore: close_sinks
           final incomingMessages = StreamController<Result>(sync: true);
           worker.onMessage.listen((MessageEvent event) {
-            logger.fine('Got message: ${event.data}');
             if (event.data is String) {
               if (event.data == 'ready') {
                 logger.info('Received ready event');
@@ -179,6 +178,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             }
             final serialized = event.data as Object?;
             var message = deserialize(serialized);
+            logger.fine('Got message: $message');
             if (message is WebWorkerException) {
               completeError(message);
               return;

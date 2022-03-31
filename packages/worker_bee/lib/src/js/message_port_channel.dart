@@ -27,7 +27,10 @@ class MessagePortChannel<T>
   Stream<T> get stream => messagePort.onMessage.transform(
         StreamTransformer<MessageEvent, T>.fromHandlers(
           handleData: (event, sink) {
-            final data = _serializers.deserialize(event.data);
+            final data = _serializers.deserialize(
+              event.data,
+              specifiedType: FullType.unspecified,
+            );
             if (data is T) {
               sink.add(data);
             } else {
@@ -38,12 +41,16 @@ class MessagePortChannel<T>
       );
 
   @override
-  void add(T event) => messagePort.postMessage(_serializers.serialize(event));
+  void add(T event) => messagePort.postMessage(_serializers.serialize(
+        event,
+        specifiedType: FullType.unspecified,
+      ));
 
   @override
   void addError(Object error, [StackTrace? stackTrace]) {
     messagePort.postMessage(_serializers.serialize(
       WebWorkerException(error, stackTrace: stackTrace),
+      specifiedType: FullType.unspecified,
     ));
   }
 

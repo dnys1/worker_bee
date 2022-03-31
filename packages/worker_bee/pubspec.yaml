@@ -9,6 +9,9 @@ environment:
 
 dependencies:
   async: ^2.8.2
+  aws_common:
+    hosted: https://pub.dillonnys.com
+    version: ^0.1.6
   built_collection: ^5.1.1
   built_value: ^8.0.0
   collection: ^1.16.0

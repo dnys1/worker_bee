@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:async/async.dart' as async;
+import 'package:aws_common/aws_common.dart';
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 import 'package:worker_bee/src/serializers.dart';
@@ -12,7 +13,7 @@ import 'package:worker_bee/worker_bee.dart';
 /// The actual base class mixes in platform-specific code to this class.
 /// {@endtemplate}
 abstract class WorkerBeeCommon<Message extends Object, Result>
-    implements StreamSink<Message> {
+    implements StreamSink<Message>, Closeable {
   /// {@template worker_bee.worker_bee_common}
   WorkerBeeCommon({
     Serializers? serializers,
@@ -109,13 +110,21 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Serializes an object using the registered `built_value` serializers.
   @protected
   Object? serialize(Object? object) {
-    return _serializers.serialize(object);
+    return _serializers.serialize(
+      object,
+      // Do not specify type so that it is serialized into the array.
+      specifiedType: FullType.unspecified,
+    );
   }
 
   /// Deserializes an object using the registered `built_value` serializers.
   @protected
   T deserialize<T extends Object?>(Object? object) {
-    return _serializers.deserialize(object) as T;
+    return _serializers.deserialize(
+      object,
+      // Do not specify type so that it pulls from the array.
+      specifiedType: FullType.unspecified,
+    ) as T;
   }
 
   /// Runs the worker in a separate thread/WebWorker.

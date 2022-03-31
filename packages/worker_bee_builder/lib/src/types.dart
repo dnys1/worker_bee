@@ -183,6 +183,9 @@ class _Async {
             if (ref != null) ref,
           ]),
       );
+
+  /// Creates an [unawaited] reference.
+  Reference get unawaited => const Reference('unawaited', _url);
 }
 
 /// `dart:convert` types

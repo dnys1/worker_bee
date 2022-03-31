@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aws_common/aws_common.dart';
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 import 'package:worker_bee/worker_bee.dart';
@@ -96,7 +97,7 @@ abstract class WorkerPoolBase<Message extends Object, Result,
 
 /// {@macro worker_bee.worker_pool_base}
 class WorkerPool<Message extends Object, Result,
-    WorkerBee extends WorkerBeeBase<Message, Result>> {
+    WorkerBee extends WorkerBeeBase<Message, Result>> implements Closeable {
   /// {@macro worker_bee.worker_pool_base}
   WorkerPool(
     this.numWorkers, {
@@ -147,6 +148,7 @@ class WorkerPool<Message extends Object, Result,
   }
 
   /// Closes the worker pool and all running workers.
+  @override
   Future<void> close() async {
     await Future.wait<void>([
       for (final worker in pool)
