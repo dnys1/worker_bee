@@ -35,6 +35,7 @@ class VmGenerator extends MessageGenerator {
           ..body = Code.scope((allocate) => '''
 final channel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(DartTypes.core.object)}>.connectSend(ports.messagePort);
 final logsChannel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(DartTypes.workerBee.logMessage)}>.connectSend(ports.logPort);
+// ignore: close_sinks
 final worker = $workerImplName();
 await worker.connect(logsChannel: logsChannel);
 ${trueResultType.isVoid ? '' : 'final result ='} await worker.run(
