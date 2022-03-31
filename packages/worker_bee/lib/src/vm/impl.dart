@@ -13,6 +13,7 @@ class SendPorts {
   const SendPorts(
     this.messagePort,
     this.exitPort,
+    this.logPort,
   );
 
   /// The port used for communicating messages, passed to the [IsolateChannel]
@@ -21,6 +22,9 @@ class SendPorts {
 
   /// The port used for exiting the isolate, passed to [Isolate.exit].
   final SendPort exitPort;
+
+  /// The port used for log messages.
+  final SendPort logPort;
 }
 
 /// The function signature for the generated VM entrypoint, as required by
@@ -45,7 +49,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   @override
   Future<void> spawn({String? jsEntrypoint}) async {
     _isolate ??= await _spawnMemoizer.runOnce(() async {
-      safePrint('(Main) Starting worker...');
+      logger.fine('Starting worker');
       final receivePort = ReceivePort(name);
       final channel = IsolateChannel<Object>.connectReceive(receivePort);
 
@@ -54,7 +58,14 @@ mixin WorkerBeeImpl<Message extends Object, Result>
 
       // Listen to stream to activate transformer.
       stream.listen((message) {
-        safePrint('(Main) Got message: $message');
+        logger.fine('Got message: $message');
+      });
+
+      final logPort = ReceivePort('${name}_logs');
+      final logChannel = IsolateChannel<LogMessage>.connectReceive(logPort);
+      logChannel.stream.listen((log) {
+        if (logsController.isClosed) return;
+        logsController.add(log);
       });
 
       final exitPort = ReceivePort('${name}_exit');
@@ -62,6 +73,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
       final ports = SendPorts(
         receivePort.sendPort,
         exitPort.sendPort,
+        logPort.sendPort,
       );
       final isolate = await Isolate.spawn(
         vmEntrypoint as VmEntrypoint,
@@ -71,10 +83,10 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         onError: errorPort.sendPort,
       );
       exitPort.first.then<void>((dynamic result) {
-        safePrint('(Main) Isolate exited with message: $result');
         // If `close` is called manually, the isolate will exit without running
         // completely and `result` will be `null`.
         if (result == null || result is! Result) {
+          logger.severe('Isolate exited unexpectedly');
           completeError(Exception('Worker quit unexpectedly'));
         } else {
           complete(result);
@@ -82,7 +94,17 @@ mixin WorkerBeeImpl<Message extends Object, Result>
       });
       errorPort.first.then<void>((dynamic error) {
         error as List<Object?>;
-        completeError(error[0] as String);
+        final message = error[0] as String;
+        final stackTraceString = error[1] as String?;
+        final stackTrace = stackTraceString == null
+            ? null
+            : StackTrace.fromString(stackTraceString);
+        logger.severe(
+          'Isolate reported error',
+          message,
+          stackTrace,
+        );
+        completeError(message, stackTrace);
       });
 
       return isolate;
