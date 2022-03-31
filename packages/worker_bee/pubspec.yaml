@@ -19,7 +19,6 @@ dependencies:
   stack_trace: ^1.10.0
   stream_channel: ^2.1.0
   stream_transform: ^2.0.0
-  tuple: ^2.0.0
 
 dev_dependencies:
   amplify_lints: ^1.0.0

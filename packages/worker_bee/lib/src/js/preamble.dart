@@ -5,7 +5,6 @@ import 'dart:html';
 
 import 'package:collection/collection.dart';
 import 'package:js/js.dart';
-import 'package:tuple/tuple.dart';
 import 'package:worker_bee/src/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
@@ -40,8 +39,8 @@ Uri get currentUri {
 }
 
 /// {@macro worker_bee.get_worker_assignment}
-Future<Tuple2<String, StreamChannel<LogMessage>>> getWorkerAssignment() async {
-  final assignmentCompleter = Completer<Tuple2<String, MessagePort>>.sync();
+Future<WorkerAssignment> getWorkerAssignment() async {
+  final assignmentCompleter = Completer<WorkerAssignment>.sync();
   late dynamic Function(Event) eventListener;
   self.addEventListener(
     'message',
@@ -51,7 +50,10 @@ Future<Tuple2<String, StreamChannel<LogMessage>>> getWorkerAssignment() async {
       final MessagePort? messagePort = event.ports.firstOrNull;
       if (message is String && messagePort is MessagePort) {
         self.removeEventListener('message', eventListener);
-        assignmentCompleter.complete(Tuple2(message, messagePort));
+        assignmentCompleter.complete(WorkerAssignment(
+          message,
+          MessagePortChannel<LogMessage>(messagePort),
+        ));
       } else {
         assignmentCompleter.completeError(StateError(
           'Invalid worker assignment: '
@@ -60,10 +62,5 @@ Future<Tuple2<String, StreamChannel<LogMessage>>> getWorkerAssignment() async {
       }
     },
   );
-  final assignment = await assignmentCompleter.future;
-  final result = Tuple2(
-    assignment.item1,
-    MessagePortChannel<LogMessage>(assignment.item2),
-  );
-  return result;
+  return assignmentCompleter.future;
 }
