@@ -35,9 +35,8 @@ class VmGenerator extends MessageGenerator {
           ..body = Code.scope((allocate) => '''
 final channel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(DartTypes.core.object)}>.connectSend(ports.messagePort);
 final logsChannel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(DartTypes.workerBee.logMessage)}>.connectSend(ports.logPort);
-final worker = $workerImplName()..setLogsChannel(logsChannel);
-// ignore: invalid_use_of_protected_member
-worker.logger.info('Connected from worker');
+final worker = $workerImplName();
+await worker.connect(logsChannel: logsChannel);
 ${trueResultType.isVoid ? '' : 'final result ='} await worker.run(
   channel.stream.asBroadcastStream().cast(), 
   channel.sink.cast(),

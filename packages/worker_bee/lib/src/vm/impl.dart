@@ -45,9 +45,6 @@ mixin WorkerBeeImpl<Message extends Object, Result>
     return null;
   }
 
-  @override
-  Future<void> connect() async {}
-
   final _spawnMemoizer = AsyncMemoizer<Isolate>();
   Isolate? _isolate;
 
