@@ -26,6 +26,14 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   String get jsEntrypoint;
 
   @override
+  String? get workerEntrypointOverride {
+    if (currentUri.path.isNotEmpty && !currentUri.path.endsWith(jsEntrypoint)) {
+      return currentUri.path;
+    }
+    return null;
+  }
+
+  @override
   @nonVirtual
   Future<void> connect() async {
     await _connectMemoizer.runOnce(() {

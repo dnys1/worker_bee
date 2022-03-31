@@ -41,6 +41,11 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   Function /*VmEntrypoint*/ get vmEntrypoint;
 
   @override
+  String? get workerEntrypointOverride {
+    return null;
+  }
+
+  @override
   Future<void> connect() async {}
 
   final _spawnMemoizer = AsyncMemoizer<Isolate>();

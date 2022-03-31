@@ -94,6 +94,15 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// The script URL for the compiled workers.
   String get jsEntrypoint => throw UnimplementedError();
 
+  /// {@template worker_bee.worker_entrypoint_override}
+  /// The alternative entrypoint used to spawn workers in the pool.
+  ///
+  /// If this pool manager was spawned in a web worker with a different
+  /// entrypoint than [jsEntrypoint], use that to also spawn workers since
+  /// it's not possible to relay that information otherwise.
+  /// {@endtemplate}
+  String? get workerEntrypointOverride;
+
   /// Serializes an object using the registered `built_value` serializers.
   @protected
   Object? serialize(Object? object) {

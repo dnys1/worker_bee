@@ -64,18 +64,6 @@ abstract class WorkerPoolBase<Message extends Object, Result,
   final AssignmentStrategy<Message>? _strategy;
   WorkerPool<Message, Result, WorkerBee>? _pool;
 
-  /// The alternative entrypoint used to spawn workers in the pool.
-  ///
-  /// If this pool manager was spawned in a web worker with a different
-  /// entrypoint than [jsEntrypoint], use that to also spawn workers since
-  /// it's not possible to relay that information otherwise.
-  String? get workerEntrypointOverride {
-    if (currentUri.path.isNotEmpty && !currentUri.path.endsWith(jsEntrypoint)) {
-      return currentUri.path;
-    }
-    return null;
-  }
-
   @override
   Future<Result> run(
     Stream<Message> listen,
@@ -87,6 +75,7 @@ abstract class WorkerPoolBase<Message extends Object, Result,
       sink: respond,
       factory: factory,
     );
+    _pool!.logs.listen(logSink.sink.add);
     await for (final request in listen) {
       final worker = await _pool!.assign(
         request,
@@ -135,6 +124,12 @@ class WorkerPool<Message extends Object, Result,
   /// Aggregated result sink for worker pool.
   final StreamSink<Result> sink;
 
+  final StreamController<LogMessage> _logsController =
+      StreamController.broadcast();
+
+  /// Aggregated log messages of worker bees.
+  Stream<LogMessage> get logs => _logsController.stream;
+
   /// Retrieves the worker for [request] based on [strategy].
   @visibleForTesting
   Future<WorkerBee> assign(
@@ -145,6 +140,7 @@ class WorkerPool<Message extends Object, Result,
     return pool[workerIndex % numWorkers].runOnce(() async {
       final worker = factory();
       worker.stream.listen(sink.add);
+      worker.logs.listen(_logsController.add);
       await worker.spawn(jsEntrypoint: jsEntrypoint);
       return worker;
     });
@@ -156,6 +152,7 @@ class WorkerPool<Message extends Object, Result,
       for (final worker in pool)
         if (worker.hasRun) (await worker.future).close(),
     ]);
+    await _logsController.close();
     await sink.close();
   }
 }
