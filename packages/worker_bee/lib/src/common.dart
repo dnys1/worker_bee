@@ -15,13 +15,16 @@ import 'package:worker_bee/worker_bee.dart';
 abstract class WorkerBeeCommon<Message extends Object, Result>
     implements StreamSink<Message> {
   /// {@template worker_bee.worker_bee_common}
-  WorkerBeeCommon([Serializers? serializers])
-      : _serializers = ((serializers ?? Serializers()).toBuilder()
+  WorkerBeeCommon({
+    Serializers? serializers,
+  }) : _serializers = ((serializers ?? Serializers()).toBuilder()
               ..add(WebWorkerException.serializer)
               ..add(WorkerBeeExceptionImpl.serializer)
-              ..add(const StackTraceSerializer()))
+              ..add(const StackTraceSerializer())
+              ..add(LogMessage.serializer))
             .build() {
     _checkSerializers();
+    _initLogger();
   }
 
   // Check that a serializer for the message type is included.
@@ -34,8 +37,53 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     }
   }
 
+  /// Listens for local messages.
+  void _initLogger() {
+    logger.level = Level.ALL;
+    logger.onRecord.listen((record) {
+      logSink.sink.add(LogMessage.fromRecord(
+        name,
+        record,
+        local: false,
+      ));
+      if (logsController.isClosed) return;
+      logsController.add(LogMessage.fromRecord(
+        isWebWorker ? name : 'Main',
+        record,
+        local: !isWebWorker,
+      ));
+    });
+  }
+
   /// The name of the worker.
   String get name;
+
+  /// The internal-use logger.
+  @protected
+  late final Logger logger = Logger.detached(name);
+
+  /// The logs sink, for outgoing messages (when in a worker).
+  @protected
+  final StreamSinkCompleter<LogMessage> logSink = StreamSinkCompleter();
+
+  /// Configures logging for the worker.
+  void setLogsChannel(StreamChannel<LogMessage> channel) {
+    logSink.setDestinationSink(channel.sink);
+
+    // Incoming messages (from the worker) should be logged locally
+    channel.stream.listen((log) {
+      if (logsController.isClosed) return;
+      logsController.add(log);
+    });
+  }
+
+  /// The log stream for external listening.
+  @protected
+  final StreamController<LogMessage> logsController =
+      StreamController.broadcast(sync: true);
+
+  /// The logger to use for all messages.
+  Stream<LogMessage> get logs => logsController.stream;
 
   /// Serializers for message and result types.
   final Serializers _serializers;
@@ -148,8 +196,9 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     //
     // Call in the next event loop to avoid.
     return Future(() => _closeMemoizer.runOnce(() async {
-          safePrint('(Main) Closing worker');
+          logger.info('Closing worker');
           await sink.close();
+          await logsController.close();
         }));
   }
 
