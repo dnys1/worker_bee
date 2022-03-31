@@ -1,3 +1,7 @@
+## 0.4.0
+
+- feat: Add logging
+
 ## 0.3.2
 
 - fix: JS fixes
