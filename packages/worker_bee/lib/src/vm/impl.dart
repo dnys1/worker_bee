@@ -51,7 +51,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   @override
   Future<void> spawn({String? jsEntrypoint}) async {
     _isolate ??= await _spawnMemoizer.runOnce(() async {
-      logger.fine('Starting worker');
+      logger.info('Starting worker');
       final receivePort = ReceivePort(name);
       final channel = IsolateChannel<Object>.connectReceive(receivePort);
 
@@ -88,7 +88,6 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         // If `close` is called manually, the isolate will exit without running
         // completely and `result` will be `null`.
         if (result == null || result is! Result) {
-          logger.severe('Isolate exited unexpectedly');
           completeError(Exception('Worker quit unexpectedly'));
         } else {
           complete(result);
@@ -101,11 +100,6 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         final stackTrace = stackTraceString == null
             ? null
             : StackTrace.fromString(stackTraceString);
-        logger.severe(
-          'Isolate reported error',
-          message,
-          stackTrace,
-        );
         completeError(message, stackTrace);
       });
 

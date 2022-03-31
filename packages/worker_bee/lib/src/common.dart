@@ -46,15 +46,20 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
       ));
       if (logsController.isClosed) return;
       logsController.add(LogMessage.fromRecord(
-        isWebWorker ? name : 'Main',
+        isRemoteWorker ? name : 'Main',
         record,
-        local: !isWebWorker,
+        local: !isRemoteWorker,
       ));
     });
   }
 
   /// The name of the worker.
   String get name;
+
+  bool _isRemoteWorker = false;
+
+  /// Whether the worker is running on a separate thread.
+  bool get isRemoteWorker => _isRemoteWorker;
 
   /// The internal-use logger.
   @protected
@@ -65,7 +70,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   final StreamSinkCompleter<LogMessage> logSink = StreamSinkCompleter();
 
   /// Configures logging for the worker.
-  void _setLogsChannel(StreamChannel<LogMessage> channel) {
+  set _logsChannel(StreamChannel<LogMessage> channel) {
     logSink.setDestinationSink(channel.sink);
 
     // Incoming messages (from the worker) should be logged locally
@@ -134,9 +139,10 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   Future<void> connect({
     StreamChannel<LogMessage>? logsChannel,
   }) async {
+    _isRemoteWorker = true;
     logger.info('Connected from worker');
     if (logsChannel != null) {
-      _setLogsChannel(logsChannel);
+      _logsChannel = logsChannel;
     }
   }
 
