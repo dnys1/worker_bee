@@ -9,6 +9,7 @@ part 'main.g.dart';
 
 Future<String> computeBase64(String text) async {
   final worker = MyWorker.create();
+  worker.logs.listen(print);
   await worker.spawn();
   worker.sink.add(MyMessage(
     (b) => b..data = Uint8List.fromList(utf8.encode(text)),
