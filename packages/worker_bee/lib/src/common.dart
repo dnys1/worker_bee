@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:async/async.dart' as async;
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
-import 'package:worker_bee/src/exception/stack_trace_serializer.dart';
-import 'package:worker_bee/src/exception/worker_bee_exception.dart';
+import 'package:worker_bee/src/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 /// {@template worker_bee.worker_bee_common}
@@ -17,12 +16,11 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// {@template worker_bee.worker_bee_common}
   WorkerBeeCommon({
     Serializers? serializers,
-  }) : _serializers = ((serializers ?? Serializers()).toBuilder()
-              ..add(WebWorkerException.serializer)
-              ..add(WorkerBeeExceptionImpl.serializer)
-              ..add(const StackTraceSerializer())
-              ..add(LogMessage.serializer))
-            .build() {
+  }) : _serializers = serializers == null
+            ? workerBeeSerializers
+            : (serializers.toBuilder()
+                  ..addAll(workerBeeSerializers.serializers))
+                .build() {
     _checkSerializers();
     _initLogger();
   }
@@ -67,7 +65,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   final StreamSinkCompleter<LogMessage> logSink = StreamSinkCompleter();
 
   /// Configures logging for the worker.
-  void setLogsChannel(StreamChannel<LogMessage> channel) {
+  void _setLogsChannel(StreamChannel<LogMessage> channel) {
     logSink.setDestinationSink(channel.sink);
 
     // Incoming messages (from the worker) should be logged locally
@@ -132,7 +130,15 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Connects to a spawning thread.
   ///
   /// Should only be called from a worker bee.
-  Future<void> connect();
+  @mustCallSuper
+  Future<void> connect({
+    StreamChannel<LogMessage>? logsChannel,
+  }) async {
+    logger.info('Connected from worker');
+    if (logsChannel != null) {
+      _setLogsChannel(logsChannel);
+    }
+  }
 
   /// The asynchronous ready trigger.
   @protected
@@ -157,6 +163,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Internal method for completing with an error.
   @protected
   void completeError(Object error, [StackTrace? stackTrace]) {
+    logger.severe('Error in worker', error, stackTrace);
     if (!isCompleted) {
       _resultCompleter.complete(async.Result.error(error, stackTrace));
     }

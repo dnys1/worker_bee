@@ -3,9 +3,13 @@
 import 'dart:async';
 import 'dart:html';
 
+import 'package:collection/collection.dart';
 import 'package:js/js.dart';
-import 'package:worker_bee/src/util.dart';
+import 'package:tuple/tuple.dart';
+import 'package:worker_bee/src/serializers.dart';
+import 'package:worker_bee/worker_bee.dart';
 
+import 'message_port_channel.dart';
 import 'util.dart';
 
 @JS('window')
@@ -36,25 +40,30 @@ Uri get currentUri {
 }
 
 /// {@macro worker_bee.get_worker_assignment}
-Future<String> getWorkerAssignment() async {
-  final initCompleter = Completer<String>.sync();
+Future<Tuple2<String, StreamChannel<LogMessage>>> getWorkerAssignment() async {
+  final assignmentCompleter = Completer<Tuple2<String, MessagePort>>.sync();
   late dynamic Function(Event) eventListener;
   self.addEventListener(
     'message',
     eventListener = (Event event) {
       event as MessageEvent;
-      self.removeEventListener('message', eventListener);
-      final Object? assignment = event.data;
-      if (assignment is! String) {
-        initCompleter.completeError(StateError(
-          'Invalid worker assignment: ${JSON.stringify(assignment)}',
-        ));
+      final Object? message = event.data;
+      final Object? messagePort = event.ports.firstOrNull;
+      if (message is String && messagePort is MessagePort) {
+        assignmentCompleter.complete(Tuple2(message, messagePort));
       } else {
-        initCompleter.complete(assignment);
+        assignmentCompleter.completeError(StateError(
+          'Invalid worker assignment: '
+          '${workerBeeSerializers.serialize(message)}',
+        ));
       }
     },
   );
-  final workerAssignment = await initCompleter.future;
-  safePrint('(Worker) Got assignment: $workerAssignment');
-  return workerAssignment;
+  final assignment = await assignmentCompleter.future;
+  final result = Tuple2(
+    assignment.item1,
+    MessagePortChannel<LogMessage>(assignment.item2),
+  );
+  self.removeEventListener('message', eventListener);
+  return result;
 }

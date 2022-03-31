@@ -19,11 +19,11 @@ Future<void> runHive<R>(
   if (isWebWorker) {
     safePrint('(Worker) Getting assignment...');
     final assignment = await getWorkerAssignment();
-    final worker = workers[assignment];
+    final worker = workers[assignment.item1];
     if (worker == null) {
       throw StateError('No worker found for role: $assignment');
     }
-    await worker().connect();
+    await worker().connect(logsChannel: assignment.item2);
   } else {
     safePrint('(Main) Not a web worker. Running app...');
     await runApp?.call();
