@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:worker_bee/worker_bee.dart';
+
 /// {@template worker_bee.is_web_worker}
 /// Whether the current script is running inside a web worker.
 ///
@@ -17,6 +19,6 @@ Uri get currentUri => Platform.script;
 ///
 /// Should not be called on VM.
 /// {@endtemplate}
-Future<String> getWorkerAssignment() async {
+Future<WorkerAssignment> getWorkerAssignment() async {
   throw UnimplementedError('Should not be called on VM');
 }

@@ -34,11 +34,15 @@ class VmGenerator extends MessageGenerator {
           ..modifier = MethodModifier.async
           ..body = Code.scope((allocate) => '''
 final channel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(DartTypes.core.object)}>.connectSend(ports.messagePort);
-${trueResultType.isVoid ? '' : 'final result ='} await $workerImplName().run(
-  channel.stream.cast(), 
+final logsChannel = ${allocate(DartTypes.streamChannel.isolateChannel)}<${allocate(DartTypes.workerBee.logMessage)}>.connectSend(ports.logPort);
+final worker = $workerImplName();
+await worker.connect(logsChannel: logsChannel);
+${trueResultType.isVoid ? '' : 'final result ='} await worker.run(
+  channel.stream.asBroadcastStream().cast(), 
   channel.sink.cast(),
 );
-safePrint('(Worker) Finished${trueResultType.isVoid ? '' : r" with result: $result"}');
+// ignore: invalid_use_of_protected_member
+worker.logger.info('Finished');
 ${allocate(DartTypes.isolate.isolate)}.exit(ports.exitPort, ${trueResultType.isVoid ? "'done'" : 'result'});
             '''),
       );

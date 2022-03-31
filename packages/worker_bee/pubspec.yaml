@@ -9,8 +9,11 @@ environment:
 
 dependencies:
   async: ^2.8.2
+  built_collection: ^5.1.1
   built_value: ^8.0.0
+  collection: ^1.16.0
   js: ^0.6.3
+  logging: ^1.0.2
   meta: ^1.7.0
   path: ^1.8.0
   stack_trace: ^1.10.0

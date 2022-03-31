@@ -7,6 +7,7 @@ Future<void> testWorker({String? jsEntrypoint}) async {
   final _message = message;
 
   final worker = E2EWorker.create();
+  worker.logs.listen(print);
   await worker.spawn(jsEntrypoint: jsEntrypoint);
   worker.add(_message);
 
@@ -40,6 +41,7 @@ Future<void> testWorkerPool({String? jsEntrypoint}) async {
     factory: E2EWorker.create,
     sink: sink,
   );
+  workerPool.logs.listen(print);
   int liveWorkers() => workerPool.pool.where((el) => el.hasRun).length;
 
   expect(liveWorkers(), 0);
@@ -73,11 +75,11 @@ Future<void> testWorkerPool({String? jsEntrypoint}) async {
 
 Future<void> testRemoteWorkerPool({String? jsEntrypoint}) async {
   final pool = E2EWorkerPool.create();
+  pool.logs.listen(print);
   await pool.spawn(jsEntrypoint: jsEntrypoint);
 
   final stream = StreamQueue(pool.stream);
 
-  const numWorkers = 5;
   for (var i = 0; i < numWorkers; i++) {
     pool.add(message);
   }

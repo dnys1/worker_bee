@@ -19,6 +19,8 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   /// Protects [spawn] from only being called once.
   final _spawnMemoizer = AsyncMemoizer<Worker>();
 
+  StreamController<Message>? _controller;
+
   /// The spawned worker instance.
   Worker? _worker;
 
@@ -26,43 +28,65 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   String get jsEntrypoint;
 
   @override
+  String? get workerEntrypointOverride {
+    if (currentUri.path.isNotEmpty && !currentUri.path.endsWith(jsEntrypoint)) {
+      return currentUri.path;
+    }
+    return null;
+  }
+
+  @override
+  void completeError(Object error, [StackTrace? stackTrace]) {
+    error = serialize(error) as Object;
+    if (isWebWorker) {
+      self.postMessage(error);
+    }
+    super.completeError(error, stackTrace);
+  }
+
+  @override
   @nonVirtual
-  Future<void> connect() async {
+  Future<void> connect({
+    StreamChannel<LogMessage>? logsChannel,
+  }) async {
+    await super.connect(logsChannel: logsChannel);
     await _connectMemoizer.runOnce(() {
       return Chain.capture(
         () async {
-          safePrint('(Worker) Connecting from worker...');
+          logger.info('Connected from worker');
           final channel = StreamChannelController<Object>(sync: true);
           self.addEventListener(
             'message',
             (Event event) {
               event as MessageEvent;
-              safePrint('(Worker) Got message: ${event.data}');
+              logger.fine('Got message: ${event.data}');
               final serialized = event.data as Object?;
               final message = deserialize<Message>(serialized);
               channel.foreign.sink.add(message);
             },
           );
           channel.foreign.stream.listen((message) {
-            safePrint('(Worker) Sending message: $message');
+            logger.fine('Sending message: $message');
             self.postMessage(serialize(message));
           });
-          safePrint('(Worker) Sending ready event');
+          logger.info('Ready');
           self.postMessage('ready');
           final result = await run(
             channel.local.stream.asBroadcastStream().cast(),
             channel.local.sink.cast(),
           );
-          safePrint('(Worker) Finished with result: $result');
+          logger.info('Finished');
           self.postMessage('done');
           self.postMessage(serialize(result));
         },
         onError: (Object error, Chain stackTrace) {
-          safePrint('(Worker) An unexpected error occurred.');
-          self.postMessage(serialize(WebWorkerException(
-            error.toString(),
-            stackTrace: stackTrace,
-          )));
+          completeError(
+            WebWorkerException(
+              error.toString(),
+              stackTrace: stackTrace,
+            ),
+            stackTrace,
+          );
         },
       );
     });
@@ -75,17 +99,19 @@ mixin WorkerBeeImpl<Message extends Object, Result>
       return Chain.capture(
         () async {
           final entrypoint = jsEntrypoint ?? this.jsEntrypoint;
-          safePrint('(Main) Spawning worker at $entrypoint...');
+          logger.info('Spawning worker at $entrypoint');
 
           // Spawn the worker using the specified script.
           Worker worker;
           try {
             worker = Worker(entrypoint);
           } on Object {
+            final rootEntrypoint = path.basename(entrypoint);
+            logger.severe('Worker not found. Trying at $rootEntrypoint');
             // If `entrypoint` contains a path, try again at the root to
             // account for Dart vs. Flutter semantics when deploying Web apps.
             try {
-              worker = Worker(path.basename(entrypoint));
+              worker = Worker(rootEntrypoint);
             } on Object {
               throw WebWorkerException(
                 'Could not launch web worker at $entrypoint.',
@@ -97,8 +123,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           var done = false;
 
           // Create the controller to handle message passing.
-          // ignore: close_sinks
-          final controller = StreamController<Message>(
+          _controller = StreamController<Message>(
             sync: true,
             onCancel: () {
               if (!done) {
@@ -110,15 +135,12 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           // Listen for error messages on the worker.
           worker.addEventListener('messageerror', (Event event) {
             event as MessageEvent;
-            final error = serialize(WebWorkerException(
+            completeError(WebWorkerException(
               'Could not serialize message: ${event.data}',
-            )) as Object;
-            controller.addError(error);
-            completeError(error);
+            ));
           });
           worker.onError.listen((Event event) {
             final eventJson = JSON.stringify(event);
-            safePrint('(Main) Error from worker: $eventJson');
             Object error;
             if (event is ErrorEvent) {
               error = WebWorkerException(
@@ -129,14 +151,12 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             } else {
               error = WebWorkerException(eventJson);
             }
-            error = serialize(error) as Object;
-            controller.addError(error);
             completeError(error);
           });
 
           // Passes outgoing messages to the worker instance.
-          controller.stream.listen((message) {
-            safePrint('(Main) Sending message: $message');
+          _controller!.stream.listen((message) {
+            logger.fine('Sending message: $message');
             worker.postMessage(serialize(message));
           });
 
@@ -144,15 +164,15 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           // ignore: close_sinks
           final incomingMessages = StreamController<Result>(sync: true);
           worker.onMessage.listen((MessageEvent event) {
-            safePrint('(Main) Got message: ${event.data}');
+            logger.fine('Got message: ${event.data}');
             if (event.data is String) {
               if (event.data == 'ready') {
-                safePrint('(Main) Received ready event');
+                logger.info('Received ready event');
                 ready.complete();
                 return;
               }
               if (event.data == 'done') {
-                safePrint('(Main) Received done event');
+                logger.info('Received done event');
                 done = true;
                 return;
               }
@@ -160,8 +180,6 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             final serialized = event.data as Object?;
             var message = deserialize(serialized);
             if (message is WebWorkerException) {
-              message = serialize(message) as Object;
-              controller.addError(message);
               completeError(message);
               return;
             }
@@ -173,10 +191,17 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           });
 
           stream = incomingMessages.stream;
-          sink = controller.sink;
+          sink = _controller!.sink;
 
-          // Send assignment
-          worker.postMessage(name);
+          // Send assignment and logs channel
+          final logsChannel = MessageChannel();
+          logsChannel.port1.onMessage.listen((event) {
+            final data = event.data as Object?;
+            final message = deserialize<LogMessage>(data);
+            if (logsController.isClosed) return;
+            logsController.add(message);
+          });
+          worker.postMessage(name, [logsChannel.port2]);
 
           await ready.future;
 
@@ -190,11 +215,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           final workerException = error is WorkerBeeException
               ? error.rebuild((b) => b.stackTrace = chain)
               : WorkerBeeExceptionImpl(error, chain);
-          if (isWebWorker) {
-            // ignore: only_throw_errors
-            throw serialize(workerException) as Object;
-          }
-          throw workerException;
+          completeError(workerException, chain);
         },
       );
     });
@@ -202,6 +223,8 @@ mixin WorkerBeeImpl<Message extends Object, Result>
 
   @override
   Future<void> close() async {
+    _controller?.close();
+    _controller = null;
     _worker?.terminate();
     _worker = null;
     await super.close();

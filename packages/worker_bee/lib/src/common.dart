@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:async/async.dart' as async;
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
-import 'package:worker_bee/src/exception/stack_trace_serializer.dart';
-import 'package:worker_bee/src/exception/worker_bee_exception.dart';
+import 'package:worker_bee/src/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 /// {@template worker_bee.worker_bee_common}
@@ -15,13 +14,15 @@ import 'package:worker_bee/worker_bee.dart';
 abstract class WorkerBeeCommon<Message extends Object, Result>
     implements StreamSink<Message> {
   /// {@template worker_bee.worker_bee_common}
-  WorkerBeeCommon([Serializers? serializers])
-      : _serializers = ((serializers ?? Serializers()).toBuilder()
-              ..add(WebWorkerException.serializer)
-              ..add(WorkerBeeExceptionImpl.serializer)
-              ..add(const StackTraceSerializer()))
-            .build() {
+  WorkerBeeCommon({
+    Serializers? serializers,
+  }) : _serializers = serializers == null
+            ? workerBeeSerializers
+            : (serializers.toBuilder()
+                  ..addAll(workerBeeSerializers.serializers))
+                .build() {
     _checkSerializers();
+    _initLogger();
   }
 
   // Check that a serializer for the message type is included.
@@ -34,8 +35,58 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     }
   }
 
+  /// Listens for local messages.
+  void _initLogger() {
+    logger.level = Level.ALL;
+    logger.onRecord.listen((record) {
+      logSink.sink.add(LogMessage.fromRecord(
+        name,
+        record,
+        local: false,
+      ));
+      if (logsController.isClosed) return;
+      logsController.add(LogMessage.fromRecord(
+        isRemoteWorker ? name : 'Main',
+        record,
+        local: !isRemoteWorker,
+      ));
+    });
+  }
+
   /// The name of the worker.
   String get name;
+
+  bool _isRemoteWorker = false;
+
+  /// Whether the worker is running on a separate thread.
+  bool get isRemoteWorker => _isRemoteWorker;
+
+  /// The internal-use logger.
+  @protected
+  late final Logger logger = Logger.detached(name);
+
+  /// The logs sink, for outgoing messages (when in a worker).
+  @protected
+  final StreamSinkCompleter<LogMessage> logSink = StreamSinkCompleter();
+
+  /// Configures logging for the worker.
+  set _logsChannel(StreamChannel<LogMessage> channel) {
+    logSink.setDestinationSink(channel.sink);
+
+    // Incoming messages (from the worker) should be logged locally
+    channel.stream.listen((log) {
+      if (logsController.isClosed) return;
+      logsController.add(log);
+    });
+  }
+
+  /// The log stream for external listening.
+  @protected
+  final StreamController<LogMessage> logsController =
+      StreamController.broadcast(sync: true);
+
+  /// The logger to use for all messages.
+  Stream<LogMessage> get logs => logsController.stream;
 
   /// Serializers for message and result types.
   final Serializers _serializers;
@@ -45,6 +96,15 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
 
   /// The script URL for the compiled workers.
   String get jsEntrypoint => throw UnimplementedError();
+
+  /// {@template worker_bee.worker_entrypoint_override}
+  /// The alternative entrypoint used to spawn workers in the pool.
+  ///
+  /// If this pool manager was spawned in a web worker with a different
+  /// entrypoint than [jsEntrypoint], use that to also spawn workers since
+  /// it's not possible to relay that information otherwise.
+  /// {@endtemplate}
+  String? get workerEntrypointOverride;
 
   /// Serializes an object using the registered `built_value` serializers.
   @protected
@@ -75,7 +135,16 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Connects to a spawning thread.
   ///
   /// Should only be called from a worker bee.
-  Future<void> connect();
+  @mustCallSuper
+  Future<void> connect({
+    StreamChannel<LogMessage>? logsChannel,
+  }) async {
+    _isRemoteWorker = true;
+    logger.info('Connected from worker');
+    if (logsChannel != null) {
+      _logsChannel = logsChannel;
+    }
+  }
 
   /// The asynchronous ready trigger.
   @protected
@@ -91,18 +160,18 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// Internal method for completing successfully with a result.
   @protected
   void complete(Result result) {
-    if (!isCompleted) {
-      _resultCompleter.complete(async.Result.value(result));
-    }
+    if (isCompleted) return;
+    logger.fine('Finished with result: $result');
+    _resultCompleter.complete(async.Result.value(result));
     close();
   }
 
   /// Internal method for completing with an error.
   @protected
   void completeError(Object error, [StackTrace? stackTrace]) {
-    if (!isCompleted) {
-      _resultCompleter.complete(async.Result.error(error, stackTrace));
-    }
+    logger.severe('Error in worker', error, stackTrace);
+    if (isCompleted) return;
+    _resultCompleter.complete(async.Result.error(error, stackTrace));
     close();
   }
 
@@ -148,8 +217,9 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
     //
     // Call in the next event loop to avoid.
     return Future(() => _closeMemoizer.runOnce(() async {
-          safePrint('(Main) Closing worker');
+          logger.info('Closing worker');
           await sink.close();
+          await logsController.close();
         }));
   }
 
