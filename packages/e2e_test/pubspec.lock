@@ -490,14 +490,14 @@ packages:
       path: "../worker_bee"
       relative: true
     source: path
-    version: "0.4.1"
+    version: "0.4.2"
   worker_bee_builder:
     dependency: "direct dev"
     description:
       path: "../worker_bee_builder"
       relative: true
     source: path
-    version: "0.4.1"
+    version: "0.4.2"
   yaml:
     dependency: transitive
     description:

@@ -35,14 +35,6 @@ abstract class MessageGenerator {
     messageType = messageEl.thisType.accept(symbolVisitor);
     messageTypeImplName = '${messageTypeName}Impl';
 
-    messageFields = messageEl.fields;
-    for (final field in messageFields) {
-      // Check that it is an abstract getter.
-      if (!field.isSynthetic) {
-        throw ArgumentError('Message fields must be getters');
-      }
-    }
-
     trueResultType =
         resultEl?.thisType.accept(symbolVisitor) ?? DartTypes.core.void$;
     resultType =

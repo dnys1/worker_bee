@@ -13,7 +13,7 @@ Future<void> testWorker({String? jsEntrypoint}) async {
 
   final messages = await worker.stream.take(1).toList();
   final result = await Result.release(worker.result);
-  for (final workerMessage in [...messages, result].map((el) => el.message)) {
+  for (final workerMessage in [...messages, result].map((el) => el!.message)) {
     expect(workerMessage.bigInt, equals(_message.bigInt));
     expect(workerMessage.bool_, equals(_message.bool_));
     expect(workerMessage.builtList.toList(),

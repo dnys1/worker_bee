@@ -134,7 +134,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// > Should not be called directly! Use [spawn] to spawn a worker, and use [stream]
   /// > and [sink] to communicate with it.
   @protected
-  Future<Result> run(Stream<Message> listen, StreamSink<Result> respond);
+  Future<Result?> run(Stream<Message> listen, StreamSink<Result> respond);
 
   /// Starts a remote worker and waits for it to connect.
   ///
@@ -161,14 +161,14 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
 
   final StreamSinkCompleter<Message> _sinkCompleter = StreamSinkCompleter();
   final StreamCompleter<Result> _streamCompleter = StreamCompleter();
-  final Completer<async.Result<Result>> _resultCompleter = Completer.sync();
+  final Completer<async.Result<Result?>> _resultCompleter = Completer.sync();
 
   /// Whether the worker bee has been completed and/or is closed.
   bool get isCompleted => _resultCompleter.isCompleted;
 
   /// Internal method for completing successfully with a result.
   @protected
-  void complete(Result result) {
+  void complete(Result? result) {
     if (isCompleted) return;
     logger.fine('Finished with result: $result');
     _resultCompleter.complete(async.Result.value(result));
@@ -204,7 +204,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   }
 
   /// The result of the worker bee's computation.
-  Future<async.Result<Result>> get result => _resultCompleter.future;
+  Future<async.Result<Result?>> get result => _resultCompleter.future;
 
   @override
   void add(Message event) => sink.add(event);

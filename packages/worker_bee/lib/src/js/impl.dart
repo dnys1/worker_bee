@@ -77,7 +77,11 @@ mixin WorkerBeeImpl<Message extends Object, Result>
           );
           logger.info('Finished');
           self.postMessage('done');
-          self.postMessage(serialize(result));
+          if (result == null) {
+            self.postMessage(null);
+          } else {
+            self.postMessage(serialize(result));
+          }
         },
         onError: (Object error, Chain stackTrace) {
           completeError(
