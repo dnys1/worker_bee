@@ -1,4 +1,5 @@
 import 'package:worker_bee/worker_bee.dart';
+import 'e2e_message.dart';
 import 'e2e_worker_pool.worker.dart';
 
 import 'e2e_worker.dart';

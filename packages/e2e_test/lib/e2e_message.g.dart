@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'e2e_worker.dart';
+part of 'e2e_message.dart';
 
 // **************************************************************************
 // BuiltValueGenerator

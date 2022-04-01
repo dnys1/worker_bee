@@ -6,14 +6,30 @@ import 'common.dart';
 
 void main() {
   group('WorkerBee', () {
-    test('VM', () => testWorker());
+    group('', () {
+      test('VM', () => testWorker());
+    });
+
+    group('| no result', () {
+      test('VM', () => testWorkerNoResult());
+    });
+
+    group('| void result', () {
+      test('VM', () => testWorkerVoidResult());
+    });
+
+    group('| null result', () {
+      test('VM', () => testWorkerNullResult());
+    });
   });
 
   group('WorkerPool', () {
-    test('VM', () => testWorkerPool());
-  });
+    group('', () {
+      test('VM', () => testWorkerPool());
+    });
 
-  group('Remote WorkerPool', () {
-    test('VM', () => testRemoteWorkerPool());
+    group('| remote', () {
+      test('VM', () => testRemoteWorkerPool());
+    });
   });
 }

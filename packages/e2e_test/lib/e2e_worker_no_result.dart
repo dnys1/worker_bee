@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:worker_bee/worker_bee.dart';
 import 'e2e_message.dart';
-import 'e2e_worker.worker.dart';
+import 'e2e_worker_no_result.worker.dart';
 
 @WorkerBee()
-abstract class E2EWorker extends WorkerBeeBase<E2EMessage, E2EResult> {
-  E2EWorker() : super(serializers: serializers);
-  factory E2EWorker.create() = E2EWorkerImpl;
+abstract class E2EWorkerNoResult extends WorkerBeeBase<E2EMessage, E2EResult> {
+  E2EWorkerNoResult() : super(serializers: serializers);
+  factory E2EWorkerNoResult.create() = E2EWorkerNoResultImpl;
 
   @override
-  Future<E2EResult> run(
+  Future<E2EResult?> run(
     Stream<E2EMessage> listen,
     StreamSink<E2EResult> respond,
   ) async {
@@ -19,7 +19,7 @@ abstract class E2EWorker extends WorkerBeeBase<E2EMessage, E2EResult> {
     final result = E2EResult((b) => b.message.replace(event));
     respond.add(result);
 
-    // Complete with a result
-    return result;
+    // Complete with no result
+    return null;
   }
 }
