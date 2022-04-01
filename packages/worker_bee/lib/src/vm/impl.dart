@@ -12,7 +12,7 @@ class SendPorts {
   /// {@macro worker_bee.send_ports}
   const SendPorts(
     this.messagePort,
-    this.exitPort,
+    this.donePort,
     this.logPort,
   );
 
@@ -20,8 +20,10 @@ class SendPorts {
   /// instance upon launch.
   final SendPort messagePort;
 
-  /// The port used for exiting the isolate, passed to [Isolate.exit].
-  final SendPort exitPort;
+  /// The port used for signaling completion from the isolate.
+  ///
+  /// Passed to [Isolate.exit].
+  final SendPort donePort;
 
   /// The port used for log messages.
   final SendPort logPort;
@@ -51,7 +53,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
   Future<void> spawn({String? jsEntrypoint}) async {
     logger.info('Starting worker');
     final receivePort = ReceivePort(name);
-    final channel = IsolateChannel<Object>.connectReceive(receivePort);
+    final channel = IsolateChannel<Object?>.connectReceive(receivePort);
 
     stream = channel.stream.cast();
     sink = channel.sink.cast();
@@ -68,11 +70,12 @@ mixin WorkerBeeImpl<Message extends Object, Result>
       logsController.add(log);
     });
 
+    final donePort = ReceivePort('${name}_done');
     final exitPort = ReceivePort('${name}_exit');
     final errorPort = ReceivePort('${name}_error');
     final ports = SendPorts(
       receivePort.sendPort,
-      exitPort.sendPort,
+      donePort.sendPort,
       logPort.sendPort,
     );
     _isolate = await Isolate.spawn(
@@ -82,14 +85,15 @@ mixin WorkerBeeImpl<Message extends Object, Result>
       onExit: exitPort.sendPort,
       onError: errorPort.sendPort,
     );
-    exitPort.first.then<void>((dynamic result) {
-      // If `close` is called manually, the isolate will exit without running
-      // completely and `result` will be `null`.
-      if (result == null || result is! Result) {
-        completeError(Exception('Worker quit unexpectedly'));
-      } else {
+    donePort.first.then<void>((dynamic result) {
+      if (result is Result?) {
         complete(result);
+      } else {
+        completeError(Exception('Unexpected result: $result'));
       }
+    });
+    exitPort.first.then<void>((dynamic result) {
+      completeError(Exception('Worker quit unexpectedly'));
     });
     errorPort.first.then<void>((dynamic error) {
       error as List<Object?>;

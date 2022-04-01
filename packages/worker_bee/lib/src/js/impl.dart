@@ -49,7 +49,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
     return Chain.capture(
       () async {
         logger.info('Connected from worker');
-        final channel = StreamChannelController<Object>(sync: true);
+        final channel = StreamChannelController<Object?>(sync: true);
         self.addEventListener(
           'message',
           (Event event) {
@@ -167,8 +167,10 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             completeError(message);
             return;
           }
-          message as Result;
-          _incomingMessages!.add(message);
+          message as Result?;
+          if (message is Result) {
+            _incomingMessages!.add(message);
+          }
           if (done) {
             complete(message);
           }

@@ -9,7 +9,6 @@ part of 'serializers.dart';
 Serializers _$workerBeeSerializers = (new Serializers().toBuilder()
       ..add(LogLevel.serializer)
       ..add(LogMessage.serializer)
-      ..add(WebWorkerException.serializer)
       ..add(WorkerBeeExceptionImpl.serializer))
     .build();
 
