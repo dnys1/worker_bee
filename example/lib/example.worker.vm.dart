@@ -6,7 +6,7 @@ import 'package:example/example.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 Future<void> _run(SendPorts ports) async {
-  final channel = IsolateChannel<Object>.connectSend(ports.messagePort);
+  final channel = IsolateChannel<Object?>.connectSend(ports.messagePort);
   final logsChannel = IsolateChannel<LogMessage>.connectSend(ports.logPort);
   final worker = MyWorkerImpl();
   await worker.connect(logsChannel: logsChannel);
