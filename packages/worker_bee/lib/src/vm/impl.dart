@@ -37,8 +37,8 @@ typedef VmEntrypoint = Future<void> Function(SendPorts);
 /// The platform-specific implementation of [WorkerBeeCommon].
 /// {@endtemplate}
 @internal
-mixin WorkerBeeImpl<Message extends Object, Result>
-    on WorkerBeeCommon<Message, Result> {
+mixin WorkerBeeImpl<Request extends Object, Response>
+    on WorkerBeeCommon<Request, Response> {
   @override
   Function /*VmEntrypoint*/ get vmEntrypoint;
 
@@ -86,7 +86,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
       onError: errorPort.sendPort,
     );
     donePort.first.then<void>((dynamic result) {
-      if (result is Result?) {
+      if (result is Response?) {
         complete(result);
       } else {
         completeError(Exception('Unexpected result: $result'));

@@ -5,9 +5,9 @@ import 'package:dart_style/dart_style.dart';
 import 'package:path/path.dart' as path;
 import 'package:source_gen/source_gen.dart';
 import 'package:worker_bee/worker_bee.dart';
-import 'package:worker_bee_builder/src/message/common.dart';
-import 'package:worker_bee_builder/src/message/js.dart';
-import 'package:worker_bee_builder/src/message/vm.dart';
+import 'package:worker_bee_builder/src/impl/common.dart';
+import 'package:worker_bee_builder/src/impl/js.dart';
+import 'package:worker_bee_builder/src/impl/vm.dart';
 
 class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
   DartEmitter get emitter => DartEmitter(
@@ -43,41 +43,41 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
     }
 
     // Look up message type to generate JS/VM implementations.
-    final messageType = typeArgs[0];
-    final messageTypeEl = messageType.element;
-    if (messageTypeEl == null || messageTypeEl is! ClassElement) {
-      final messageTypeName =
-          messageType.getDisplayString(withNullability: true);
-      throw ArgumentError('Could not find element for $messageTypeName.');
+    final requestType = typeArgs[0];
+    final requestTypeEl = requestType.element;
+    if (requestTypeEl == null || requestTypeEl is! ClassElement) {
+      final requestTypeName =
+          requestType.getDisplayString(withNullability: true);
+      throw ArgumentError('Could not find element for $requestTypeName.');
     }
 
-    final resultType = typeArgs[1];
-    final resultTypeEl = resultType.element;
+    final responseType = typeArgs[1];
+    final responseTypeEl = responseType.element;
 
     final poolWorkerType = typeArgs.length == 3 ? typeArgs[2] : null;
     final poolWorkerTypeEl = poolWorkerType?.element;
 
     final jsEntrypoint = annotation.read('jsEntrypoint').stringValue;
-    final messageImpls = generateMessages(
+    final workerImpls = generateWorkerImpls(
       element,
-      messageTypeEl,
-      resultTypeEl as ClassElement?,
+      requestTypeEl,
+      responseTypeEl as ClassElement?,
       poolWorkerTypeEl as ClassElement?,
       jsEntrypoint,
     );
 
     final libraries = <Target, String>{};
-    for (final messageImpl in messageImpls) {
-      final target = messageImpl.target.name;
+    for (final workerImpl in workerImpls) {
+      final target = workerImpl.target.name;
       final assetId = buildStep.inputId.changeExtension('.worker.$target.dart');
-      libraries[messageImpl.target] = path.basename(assetId.path);
-      await buildStep.writeAsString(assetId, messageImpl.impl);
+      libraries[workerImpl.target] = path.basename(assetId.path);
+      await buildStep.writeAsString(assetId, workerImpl.impl);
     }
 
     return "export '${libraries[Target.vm]}' if (dart.library.html) '${libraries[Target.js]}';";
   }
 
-  List<WorkerMessageImpl> generateMessages(
+  List<WorkerMessageImpl> generateWorkerImpls(
     ClassElement workerEl,
     ClassElement messageTypeEl,
     ClassElement? resultTypeEl,

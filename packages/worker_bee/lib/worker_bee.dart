@@ -66,9 +66,9 @@ class WorkerHive {
 ///
 /// Classes annotated with [WorkerBee] must extend this class.
 /// {@endtemplate}
-abstract class WorkerBeeBase<Message extends Object, Result>
-    extends WorkerBeeCommon<Message, Result>
-    with WorkerBeeImpl<Message, Result> {
+abstract class WorkerBeeBase<Request extends Object, Response>
+    extends WorkerBeeCommon<Request, Response>
+    with WorkerBeeImpl<Request, Response> {
   /// {@macro worker_bee.worker_bee_base}
   WorkerBeeBase({
     Serializers? serializers,

@@ -1,16 +1,16 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:code_builder/code_builder.dart';
-import 'package:worker_bee_builder/src/message/common.dart';
+import 'package:worker_bee_builder/src/impl/common.dart';
 import 'package:worker_bee_builder/src/types.dart';
 
 class JsGenerator extends MessageGenerator {
   JsGenerator(
     ClassElement classEl,
-    ClassElement messageEl,
-    ClassElement? resultTypeEl,
+    ClassElement requestTypeEl,
+    ClassElement? responseTypeEl,
     ClassElement? poolWorkerTypeEl,
     this.entrypoint,
-  ) : super(classEl, messageEl, resultTypeEl, poolWorkerTypeEl);
+  ) : super(classEl, requestTypeEl, responseTypeEl, poolWorkerTypeEl);
 
   final String entrypoint;
 

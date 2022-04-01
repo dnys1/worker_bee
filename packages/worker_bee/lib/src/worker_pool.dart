@@ -5,8 +5,8 @@ import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 import 'package:worker_bee/worker_bee.dart';
 
-/// Identifies a [Message] type by selecting the property to hash.
-typedef Identifier<Message extends Object> = Object Function(Message);
+/// Identifies a [Request] type by selecting the property to hash.
+typedef Identifier<Request extends Object> = Object Function(Request);
 
 enum _AssignmentStrategyType {
   roundRobin,
@@ -14,7 +14,7 @@ enum _AssignmentStrategyType {
 }
 
 /// The technique used to assign a request to a worker bee in a [WorkerPool].
-class AssignmentStrategy<Message extends Object> {
+class AssignmentStrategy<Request extends Object> {
   AssignmentStrategy._(this._type, [this._getId]);
 
   /// Every request is assigned to the next worker in the rotation, evenly
@@ -33,7 +33,7 @@ class AssignmentStrategy<Message extends Object> {
   int _currentWorker = 0;
 
   /// Assigns [request] to a worker index based on the strategy.
-  int _assign(Message request) {
+  int _assign(Request request) {
     switch (_type) {
       case _AssignmentStrategyType.roundRobin:
         return _currentWorker++;
@@ -47,14 +47,14 @@ class AssignmentStrategy<Message extends Object> {
 /// {@template worker_bee.worker_pool_base}
 /// Base class for a pool of [WorkerBee].
 /// {@endtemplate}
-abstract class WorkerPoolBase<Message extends Object, Result,
-        WorkerBee extends WorkerBeeBase<Message, Result>>
-    extends WorkerBeeBase<Message, Result> {
+abstract class WorkerPoolBase<Request extends Object, Response,
+        WorkerBee extends WorkerBeeBase<Request, Response>>
+    extends WorkerBeeBase<Request, Response> {
   /// {@macro worker_bee.worker_pool_base}
   WorkerPoolBase(
     this._numWorkers, {
     Serializers? serializers,
-    AssignmentStrategy<Message>? strategy,
+    AssignmentStrategy<Request>? strategy,
   })  : _strategy = strategy,
         super(serializers: serializers);
 
@@ -62,13 +62,13 @@ abstract class WorkerPoolBase<Message extends Object, Result,
   WorkerBee Function() get factory;
 
   final int _numWorkers;
-  final AssignmentStrategy<Message>? _strategy;
-  WorkerPool<Message, Result, WorkerBee>? _pool;
+  final AssignmentStrategy<Request>? _strategy;
+  WorkerPool<Request, Response, WorkerBee>? _pool;
 
   @override
-  Future<Result> run(
-    Stream<Message> listen,
-    StreamSink<Result> respond,
+  Future<Response> run(
+    Stream<Request> listen,
+    StreamSink<Response> respond,
   ) async {
     _pool = WorkerPool(
       _numWorkers,
@@ -96,14 +96,14 @@ abstract class WorkerPoolBase<Message extends Object, Result,
 }
 
 /// {@macro worker_bee.worker_pool_base}
-class WorkerPool<Message extends Object, Result,
-    WorkerBee extends WorkerBeeBase<Message, Result>> implements Closeable {
+class WorkerPool<Request extends Object, Response,
+    WorkerBee extends WorkerBeeBase<Request, Response>> implements Closeable {
   /// {@macro worker_bee.worker_pool_base}
   WorkerPool(
     this.numWorkers, {
     required this.factory,
     required this.sink,
-    AssignmentStrategy<Message>? strategy,
+    AssignmentStrategy<Request>? strategy,
   }) : strategy = strategy ?? AssignmentStrategy.roundRobin();
 
   /// The pool of lazily-initialized worker bees.
@@ -123,7 +123,7 @@ class WorkerPool<Message extends Object, Result,
   final AssignmentStrategy strategy;
 
   /// Aggregated result sink for worker pool.
-  final StreamSink<Result> sink;
+  final StreamSink<Response> sink;
 
   final StreamController<LogMessage> _logsController =
       StreamController.broadcast();
@@ -134,7 +134,7 @@ class WorkerPool<Message extends Object, Result,
   /// Retrieves the worker for [request] based on [strategy].
   @visibleForTesting
   Future<WorkerBee> assign(
-    Message request, {
+    Request request, {
     String? jsEntrypoint,
   }) {
     final workerIndex = strategy._assign(request);

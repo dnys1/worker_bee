@@ -11,11 +11,11 @@ import 'package:worker_bee/worker_bee.dart';
 import 'util.dart';
 
 /// {@macro worker_bee.worker_bee_impl}
-mixin WorkerBeeImpl<Message extends Object, Result>
-    on WorkerBeeCommon<Message, Result> {
+mixin WorkerBeeImpl<Request extends Object, Response>
+    on WorkerBeeCommon<Request, Response> {
   // Controllers used to manage web worker.
-  StreamController<Message>? _controller;
-  StreamController<Result>? _incomingMessages;
+  StreamController<Request>? _controller;
+  StreamController<Response>? _incomingMessages;
 
   /// The spawned worker instance.
   Worker? _worker;
@@ -56,7 +56,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             event as MessageEvent;
             logger.fine('Got message: ${event.data}');
             final serialized = event.data as Object?;
-            final message = deserialize<Message>(serialized);
+            final message = deserialize<Request>(serialized);
             channel.foreign.sink.add(message);
           },
         );
@@ -112,7 +112,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         var done = false;
 
         // Create the controller to handle message passing.
-        _controller = StreamController<Message>(
+        _controller = StreamController<Request>(
           sync: true,
           onCancel: () {
             if (!done) {
@@ -146,7 +146,7 @@ mixin WorkerBeeImpl<Message extends Object, Result>
         });
 
         // Listen to worker
-        _incomingMessages = StreamController<Result>(sync: true);
+        _incomingMessages = StreamController<Response>(sync: true);
         _worker!.onMessage.listen((MessageEvent event) {
           if (event.data is String) {
             if (event.data == 'ready') {
@@ -167,8 +167,8 @@ mixin WorkerBeeImpl<Message extends Object, Result>
             completeError(message);
             return;
           }
-          message as Result?;
-          if (message is Result) {
+          message as Response?;
+          if (message is Response) {
             _incomingMessages!.add(message);
           }
           if (done) {

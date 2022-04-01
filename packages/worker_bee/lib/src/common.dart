@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:async/async.dart' as async;
 import 'package:aws_common/aws_common.dart';
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
@@ -12,8 +11,8 @@ import 'package:worker_bee/worker_bee.dart';
 ///
 /// The actual base class mixes in platform-specific code to this class.
 /// {@endtemplate}
-abstract class WorkerBeeCommon<Message extends Object, Result>
-    implements StreamSink<Message>, Closeable {
+abstract class WorkerBeeCommon<Request extends Object, Response>
+    implements StreamSink<Request>, Closeable {
   /// {@template worker_bee.worker_bee_common}
   WorkerBeeCommon({
     Serializers? serializers,
@@ -28,10 +27,10 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
 
   // Check that a serializer for the message type is included.
   void _checkSerializers() {
-    final hasMessageSeralizer = _serializers.serializerForType(Message) != null;
+    final hasMessageSeralizer = _serializers.serializerForType(Request) != null;
     if (!hasMessageSeralizer) {
       throw StateError(
-        'Worker did not include serializer for message type ($Message)',
+        'Worker did not include serializer for message type ($Request)',
       );
     }
   }
@@ -134,7 +133,7 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   /// > Should not be called directly! Use [spawn] to spawn a worker, and use [stream]
   /// > and [sink] to communicate with it.
   @protected
-  Future<Result?> run(Stream<Message> listen, StreamSink<Result> respond);
+  Future<Response?> run(Stream<Request> listen, StreamSink<Response> respond);
 
   /// Starts a remote worker and waits for it to connect.
   ///
@@ -159,19 +158,19 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   @protected
   final Completer<void> ready = Completer();
 
-  final StreamSinkCompleter<Message> _sinkCompleter = StreamSinkCompleter();
-  final StreamCompleter<Result> _streamCompleter = StreamCompleter();
-  final Completer<async.Result<Result?>> _resultCompleter = Completer.sync();
+  final StreamSinkCompleter<Request> _sinkCompleter = StreamSinkCompleter();
+  final StreamCompleter<Response> _streamCompleter = StreamCompleter();
+  final Completer<Result<Response?>> _resultCompleter = Completer.sync();
 
   /// Whether the worker bee has been completed and/or is closed.
   bool get isCompleted => _resultCompleter.isCompleted;
 
   /// Internal method for completing successfully with a result.
   @protected
-  void complete(Result? result) {
+  void complete(Response? result) {
     if (isCompleted) return;
     logger.fine('Finished with result: $result');
-    _resultCompleter.complete(async.Result.value(result));
+    _resultCompleter.complete(Result.value(result));
     close();
   }
 
@@ -180,41 +179,41 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   void completeError(Object error, [StackTrace? stackTrace]) {
     logger.severe('Error in worker', error, stackTrace);
     if (isCompleted) return;
-    _resultCompleter.complete(async.Result.error(error, stackTrace));
+    _resultCompleter.complete(Result.error(error, stackTrace));
     close();
   }
 
-  late final Stream<Result> _stream =
+  late final Stream<Response> _stream =
       _streamCompleter.stream.asBroadcastStream();
 
   /// The stream of responses.
-  Stream<Result> get stream => _stream;
+  Stream<Response> get stream => _stream;
 
   @protected
-  set stream(Stream<Result> stream) {
+  set stream(Stream<Response> stream) {
     _streamCompleter.setSourceStream(stream);
   }
 
   /// The sink for requests.
-  StreamSink<Message> get sink => _sinkCompleter.sink;
+  StreamSink<Request> get sink => _sinkCompleter.sink;
 
   @protected
-  set sink(StreamSink<Message> sink) {
+  set sink(StreamSink<Request> sink) {
     _sinkCompleter.setDestinationSink(sink);
   }
 
   /// The result of the worker bee's computation.
-  Future<async.Result<Result?>> get result => _resultCompleter.future;
+  Future<Result<Response?>> get result => _resultCompleter.future;
 
   @override
-  void add(Message event) => sink.add(event);
+  void add(Request event) => sink.add(event);
 
   @override
   void addError(Object error, [StackTrace? stackTrace]) =>
       sink.addError(error, stackTrace);
 
   @override
-  Future<void> addStream(Stream<Message> stream) => sink.addStream(stream);
+  Future<void> addStream(Stream<Request> stream) => sink.addStream(stream);
 
   @override
   @mustCallSuper

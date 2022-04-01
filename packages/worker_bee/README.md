@@ -10,47 +10,46 @@ Worker bees are isolated units of computation which can be offloaded from the ma
 Worker bees provide an opinionated solution to these problems, allowing a single worker definition to be the source of truth for both VM and Web targets. Futher, web workers can be bundled in a single `.js` file to minimize the amount of code which needs to be shipped to the user's browser.
 
 ### Caveats
-- Workers must be compiled using dart2js (not DDC)
-- Message and result types must be serializable via `built_value`
+- Request and response types must be serializable via [`built_value`](https://pub.dev/packages/built_value)
 
 ## Getting Started
 
 To get started, create an abstract class extending `WorkerBeeBase`. This will be where your worker's business logic lives. Workers communicate via message passing and optionally, complete with a result. `WorkerBeeBase` requires both of these types to be specified, and additionally requires that the types be serializable via `built_value`.
 
 ```dart
-/// A worker bee which communicates via passing strings and which does not have a result type.
-abstract class MyWorker extends WorkerBeeBase<String, void>
+/// A worker bee which communicates via passing strings.
+abstract class MyWorker extends WorkerBeeBase<String, String>
 ```
 
 Next, create the required constructors:
-1. A default constructor, which optionally calls `super` with `built_value` serializers if using a custom type for the message or result.
+1. A default constructor, which optionally calls `super` with `built_value` serializers if using a custom type for the request or response.
 2. A factory constructor called `create` which redirects to a to-be-created implementation class called `<WorkerName>Impl`.
 
 ```dart
-abstract class MyWorker extends WorkerBeeBase<String, void> {
-    MyWorker();
-    factory MyWorker.create() = MyWorkerImpl;
+abstract class MyWorker extends WorkerBeeBase<String, String> {
+  MyWorker();
+  factory MyWorker.create() = MyWorkerImpl;
 }
 ```
 
 Now, add the business logic by overriding the `run` method.
 
 ```dart
-abstract class MyWorker extends WorkerBeeBase<String, void> {
-    MyWorker();
-    factory MyWorker.create() = MyWorkerImpl;
-
-    @override
-    Future<void> run(
-        Stream<String> listen,
-        StreamSink<String> respond,
-    ) async {
-        await for (final message in listen) {
-            if (message == 'ping') {
-                respond.add('pong');
-            }
-        }
+abstract class MyWorker extends WorkerBeeBase<String, String> {
+  MyWorker();
+  factory MyWorker.create() = MyWorkerImpl;
+  
+  @override
+  Future<String?> run(
+    Stream<String> listen,
+    StreamSink<String> respond,
+  ) async {
+    await for (final message in listen) {
+      if (message == 'ping') {
+        respond.add('pong');
+      }
     }
+  }
 }
 ```
 
@@ -60,8 +59,8 @@ And annotate the class as a `WorkerBee` and import the to-be-generated worker de
 import 'my_worker.worker.dart';
 
 @WorkerBee()
-abstract class MyWorker extends WorkerBeeBase<String, void> {
-    // ...
+abstract class MyWorker extends WorkerBeeBase<String, String> {
+  // ...
 }
 ```
 
@@ -76,9 +75,9 @@ To run the worker, wrap your `main` function with the `runHive` command. The fir
 
 ```dart
 void main() {
-    runHive(workers, () {
-        print('Hello, world');
-    });
+  runHive(workers, () {
+    print('Hello, world');
+  });
 }
 ```
 
@@ -88,12 +87,12 @@ Annotate your main function with all your worker bee class types and add a `part
 part 'main.g.dart';
 
 @WorkerHive([
-    MyWorker,
+  MyWorker,
 ])
 void main() {
-    runHive(workers, () {
-        print('Hello, world');
-    });
+  runHive(workers, () {
+    print('Hello, world');
+  });
 }
 ```
 
@@ -103,14 +102,14 @@ At this point, your app should compile, although you haven't interacted with you
 
 ```dart
 void main() {
-    runHive(workers, () async {
-        final worker = MyWorker.create();
-        await worker.spawn();
-        worker.stream.listen((msg) {
-            print('Got message from worker: $msg');
-        })
-        worker.sink.add('ping');
+  runHive(workers, () async {
+    final worker = MyWorker.create();
+    await worker.spawn();
+    worker.stream.listen((msg) {
+      print('Got message from worker: $msg');
     });
+    worker.sink.add('ping');
+  });
 }
 
 // Got message from worker: pong
