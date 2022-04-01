@@ -13,7 +13,6 @@ import 'src/vm/impl.dart' if (dart.library.html) 'src/js/impl.dart';
 export 'package:async/async.dart';
 export 'package:logging/logging.dart';
 export 'package:stream_transform/stream_transform.dart';
-export 'src/exception/web_worker_exception.dart';
 export 'src/exception/worker_bee_exception.dart' show WorkerBeeException;
 export 'src/logger/log_message.dart';
 export 'src/preamble.dart';

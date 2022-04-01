@@ -216,20 +216,12 @@ abstract class WorkerBeeCommon<Message extends Object, Result>
   @override
   Future<void> addStream(Stream<Message> stream) => sink.addStream(stream);
 
-  final _closeMemoizer = AsyncMemoizer<void>();
-
   @override
   @mustCallSuper
-  Future<void> close() {
-    // Multiple calls to the memoizer in the same event loop causes this to
-    // throw a StateError.
-    //
-    // Call in the next event loop to avoid.
-    return Future(() => _closeMemoizer.runOnce(() async {
-          logger.info('Closing worker');
-          await sink.close();
-          await logsController.close();
-        }));
+  Future<void> close() async {
+    logger.info('Closing worker');
+    await sink.close();
+    await logsController.close();
   }
 
   @override

@@ -45,65 +45,60 @@ mixin WorkerBeeImpl<Message extends Object, Result>
     return null;
   }
 
-  final _spawnMemoizer = AsyncMemoizer<Isolate>();
   Isolate? _isolate;
 
   @override
   Future<void> spawn({String? jsEntrypoint}) async {
-    _isolate ??= await _spawnMemoizer.runOnce(() async {
-      logger.info('Starting worker');
-      final receivePort = ReceivePort(name);
-      final channel = IsolateChannel<Object>.connectReceive(receivePort);
+    logger.info('Starting worker');
+    final receivePort = ReceivePort(name);
+    final channel = IsolateChannel<Object>.connectReceive(receivePort);
 
-      stream = channel.stream.cast();
-      sink = channel.sink.cast();
+    stream = channel.stream.cast();
+    sink = channel.sink.cast();
 
-      // Listen to stream to activate transformer.
-      stream.listen((message) {
-        logger.fine('Got message: $message');
-      });
+    // Listen to stream to activate transformer.
+    stream.listen((message) {
+      logger.fine('Got message: $message');
+    });
 
-      final logPort = ReceivePort('${name}_logs');
-      final logChannel = IsolateChannel<LogMessage>.connectReceive(logPort);
-      logChannel.stream.listen((log) {
-        if (logsController.isClosed) return;
-        logsController.add(log);
-      });
+    final logPort = ReceivePort('${name}_logs');
+    final logChannel = IsolateChannel<LogMessage>.connectReceive(logPort);
+    logChannel.stream.listen((log) {
+      if (logsController.isClosed) return;
+      logsController.add(log);
+    });
 
-      final exitPort = ReceivePort('${name}_exit');
-      final errorPort = ReceivePort('${name}_error');
-      final ports = SendPorts(
-        receivePort.sendPort,
-        exitPort.sendPort,
-        logPort.sendPort,
-      );
-      final isolate = await Isolate.spawn(
-        vmEntrypoint as VmEntrypoint,
-        ports,
-        debugName: name,
-        onExit: exitPort.sendPort,
-        onError: errorPort.sendPort,
-      );
-      exitPort.first.then<void>((dynamic result) {
-        // If `close` is called manually, the isolate will exit without running
-        // completely and `result` will be `null`.
-        if (result == null || result is! Result) {
-          completeError(Exception('Worker quit unexpectedly'));
-        } else {
-          complete(result);
-        }
-      });
-      errorPort.first.then<void>((dynamic error) {
-        error as List<Object?>;
-        final message = error[0] as String;
-        final stackTraceString = error[1] as String?;
-        final stackTrace = stackTraceString == null
-            ? null
-            : StackTrace.fromString(stackTraceString);
-        completeError(message, stackTrace);
-      });
-
-      return isolate;
+    final exitPort = ReceivePort('${name}_exit');
+    final errorPort = ReceivePort('${name}_error');
+    final ports = SendPorts(
+      receivePort.sendPort,
+      exitPort.sendPort,
+      logPort.sendPort,
+    );
+    _isolate = await Isolate.spawn(
+      vmEntrypoint as VmEntrypoint,
+      ports,
+      debugName: name,
+      onExit: exitPort.sendPort,
+      onError: errorPort.sendPort,
+    );
+    exitPort.first.then<void>((dynamic result) {
+      // If `close` is called manually, the isolate will exit without running
+      // completely and `result` will be `null`.
+      if (result == null || result is! Result) {
+        completeError(Exception('Worker quit unexpectedly'));
+      } else {
+        complete(result);
+      }
+    });
+    errorPort.first.then<void>((dynamic error) {
+      error as List<Object?>;
+      final message = error[0] as String;
+      final stackTraceString = error[1] as String?;
+      final stackTrace = stackTraceString == null
+          ? null
+          : StackTrace.fromString(stackTraceString);
+      completeError(message, stackTrace);
     });
   }
 

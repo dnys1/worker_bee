@@ -77,7 +77,7 @@ abstract class E2EWorker extends WorkerBeeBase<E2EMessage, E2EResult> {
   factory E2EWorker.create() = E2EWorkerImpl;
 
   @override
-  Future<E2EResult> run(
+  Future<E2EResult?> run(
     Stream<E2EMessage> listen,
     StreamSink<E2EResult> respond,
   ) async {
@@ -86,7 +86,7 @@ abstract class E2EWorker extends WorkerBeeBase<E2EMessage, E2EResult> {
     final result = E2EResult((b) => b.message.replace(event));
     respond.add(result);
 
-    // Complete with a result
-    return result;
+    // Complete with no result
+    return null;
   }
 }
