@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:html';
 
 import 'package:built_value/serializer.dart';
+import 'package:worker_bee/src/exception/worker_bee_exception.dart';
 import 'package:worker_bee/src/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
@@ -49,7 +50,7 @@ class MessagePortChannel<T>
   @override
   void addError(Object error, [StackTrace? stackTrace]) {
     messagePort.postMessage(_serializers.serialize(
-      WebWorkerException(error, stackTrace: stackTrace),
+      WorkerBeeExceptionImpl(error, stackTrace),
       specifiedType: FullType.unspecified,
     ));
   }

@@ -19,10 +19,8 @@ Future<String> computeBase64(String text) async {
     }
   });
   await worker.spawn();
-  worker.sink.add(MyMessage(
-    (b) => b..data = Uint8List.fromList(utf8.encode(text)),
-  ));
-  return Result.release(worker.result);
+  worker.sink.add(utf8.encode(text) as Uint8List);
+  return worker.stream.first;
 }
 
 @WorkerHive([

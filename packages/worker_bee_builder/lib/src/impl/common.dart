@@ -15,8 +15,8 @@ class WorkerMessageImpl {
 abstract class MessageGenerator {
   MessageGenerator(
     this.workerEl,
-    this.messageEl,
-    this.resultEl,
+    this.requestEl,
+    this.responseEl,
     this.poolWorkerTypeEl,
   ) {
     isWorkerPool = workerEl.supertype!.element.name == 'WorkerPoolBase';
@@ -28,28 +28,15 @@ abstract class MessageGenerator {
     );
     _checkCtors(workerEl.constructors);
 
-    if (!messageEl.isAbstract) {
-      throw ArgumentError('Message classes must be abstract');
-    }
-    final messageTypeName = messageEl.name;
-    messageType = messageEl.thisType.accept(symbolVisitor);
-    messageTypeImplName = '${messageTypeName}Impl';
+    final requestTypeName = requestEl.name;
+    requestType = requestEl.thisType.accept(symbolVisitor);
+    requestTypeImplName = '${requestTypeName}Impl';
 
-    messageFields = messageEl.fields;
-    for (final field in messageFields) {
-      // Check that it is an abstract getter.
-      if (!field.isSynthetic) {
-        throw ArgumentError('Message fields must be getters');
-      }
-    }
-
-    trueResultType =
-        resultEl?.thisType.accept(symbolVisitor) ?? DartTypes.core.void$;
-    resultType =
-        trueResultType.isVoid ? DartTypes.core.object.nullable : trueResultType;
-    if (trueResultType.symbol == messageType.symbol) {
-      throw StateError('Message and result types should not be the same');
-    }
+    trueResponseType =
+        responseEl?.thisType.accept(symbolVisitor) ?? DartTypes.core.void$;
+    responseType = trueResponseType.isVoid
+        ? DartTypes.core.object.nullable
+        : trueResponseType;
 
     if (isWorkerPool) {
       poolWorkerType = poolWorkerTypeEl!.thisType.accept(symbolVisitor);
@@ -91,20 +78,19 @@ abstract class MessageGenerator {
 
   final symbolVisitor = const SymbolVisitor();
   final ClassElement workerEl;
-  final ClassElement messageEl;
-  final ClassElement? resultEl;
+  final ClassElement requestEl;
+  final ClassElement? responseEl;
   final ClassElement? poolWorkerTypeEl;
 
   late final bool isWorkerPool;
   late final String workerName;
   late final String workerImplName;
   late final Reference workerType;
-  late final Reference messageType;
+  late final Reference requestType;
   late final Reference poolWorkerType;
-  late final String messageTypeImplName;
-  late final List<FieldElement> messageFields;
-  late final Reference trueResultType;
-  late final Reference resultType;
+  late final String requestTypeImplName;
+  late final Reference trueResponseType;
+  late final Reference responseType;
 
   Library generate();
 }

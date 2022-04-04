@@ -10,7 +10,6 @@ part 'serializers.g.dart';
 /// Serializers common to all worker bees.
 @internal
 @SerializersFor([
-  WebWorkerException,
   WorkerBeeExceptionImpl,
   LogMessage,
 ])

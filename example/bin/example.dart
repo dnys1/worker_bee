@@ -29,10 +29,8 @@ void main(List<String> args) async {
       }
     });
     await worker.spawn();
-    worker.sink.add(
-      MyMessage((b) => b..data = Uint8List.fromList(utf8.encode(textToEncode))),
-    );
-    final result = await Result.release(worker.result);
+    worker.sink.add(utf8.encode(textToEncode) as Uint8List);
+    final result = await worker.stream.first;
     print('Got result: $result');
     exit(0);
   });

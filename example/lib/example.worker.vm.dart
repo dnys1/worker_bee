@@ -6,7 +6,7 @@ import 'package:example/example.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 Future<void> _run(SendPorts ports) async {
-  final channel = IsolateChannel<Object>.connectSend(ports.messagePort);
+  final channel = IsolateChannel<Object?>.connectSend(ports.messagePort);
   final logsChannel = IsolateChannel<LogMessage>.connectSend(ports.logPort);
   final worker = MyWorkerImpl();
   await worker.connect(logsChannel: logsChannel);
@@ -17,7 +17,7 @@ Future<void> _run(SendPorts ports) async {
 // ignore: invalid_use_of_protected_member
   worker.logger.info('Finished');
   unawaited(worker.close());
-  Isolate.exit(ports.exitPort, result);
+  Isolate.exit(ports.donePort, result);
 }
 
 class MyWorkerImpl extends MyWorker {
