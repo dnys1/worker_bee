@@ -15,9 +15,10 @@ export 'package:logging/logging.dart';
 export 'package:stream_transform/stream_transform.dart';
 export 'src/exception/worker_bee_exception.dart' show WorkerBeeException;
 export 'src/logger/log_message.dart';
+export 'src/pool/assignment_strategy.dart';
+export 'src/pool/worker_pool.dart';
 export 'src/preamble.dart';
 export 'src/worker_bee_vm.dart' if (dart.library.html) 'src/worker_bee_js.dart';
-export 'src/worker_pool.dart';
 
 /// {@template worker_bee.worker_bee}
 /// Annotation class for marking worker bees.

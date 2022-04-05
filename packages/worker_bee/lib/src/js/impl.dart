@@ -95,10 +95,10 @@ mixin WorkerBeeImpl<Request extends Object, Response>
         try {
           _worker = Worker(entrypoint);
         } on Object {
-          final rootEntrypoint = path.basename(entrypoint);
-          logger.severe('Worker not found. Trying at $rootEntrypoint');
           // If `entrypoint` contains a path, try again at the root to
           // account for Dart vs. Flutter semantics when deploying Web apps.
+          final rootEntrypoint = path.basename(entrypoint);
+          logger.severe('Worker not found. Trying at $rootEntrypoint');
           try {
             _worker = Worker(rootEntrypoint);
           } on Object {
