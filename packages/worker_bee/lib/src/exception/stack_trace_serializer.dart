@@ -35,7 +35,7 @@ class StackTraceSerializer implements PrimitiveSerializer<StackTrace> {
       return Trace.parse(serialized);
     }
     if (serialized is List<String>) {
-      return Trace(serialized.map((frame) => Frame.parseFriendly(frame)));
+      return Trace(serialized.map(Frame.parseFriendly));
     }
     throw ArgumentError(
       'Unknown StackFrame type (${serialized.runtimeType}): $serialized',

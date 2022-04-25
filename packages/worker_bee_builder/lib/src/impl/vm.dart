@@ -51,6 +51,7 @@ ${allocate(DartTypes.isolate.isolate)}.exit(ports.donePort${trueResponseType.isV
   Class get _workerClass => Class(
         (c) => c
           ..name = workerImplName
+          ..docs.add('/// The VM implementation of [${workerType.symbol}].')
           ..extend = workerType
           ..methods.addAll([
             Method((m) => m

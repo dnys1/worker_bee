@@ -27,6 +27,7 @@ class JsGenerator extends MessageGenerator {
   Class get _workerClass => Class(
         (c) => c
           ..name = workerImplName
+          ..docs.add('/// The JS implementation of [${workerType.symbol}].')
           ..extend = workerType
           ..methods.addAll([
             Method((m) => m
