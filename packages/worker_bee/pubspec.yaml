@@ -1,6 +1,6 @@
 name: worker_bee
 description: Cross-platform isolated worker runtime
-version: 0.4.4
+version: 0.4.5
 homepage: https://github.com/dnys1/worker_bee
 publish_to: https://pub.dillonnys.com
 
@@ -8,7 +8,7 @@ environment:
   sdk: ">=2.15.0 <3.0.0"
 
 dependencies:
-  async: ^2.8.2
+  async: ^2.8.0
   aws_common:
     hosted: 
       url: https://pub.dillonnys.com
@@ -16,7 +16,7 @@ dependencies:
     version: ^0.1.6
   built_collection: ^5.1.1
   built_value: ^8.0.0
-  collection: ^1.16.0
+  collection: ^1.15.0
   js: ^0.6.3
   logging: ^1.0.2
   meta: ^1.7.0
