@@ -20,6 +20,7 @@ Future<void> _run(SendPorts ports) async {
   Isolate.exit(ports.donePort, result);
 }
 
+/// The VM implementation of [MyWorker].
 class MyWorkerImpl extends MyWorker {
   @override
   String get name => 'MyWorker';
