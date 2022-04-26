@@ -6,9 +6,8 @@ import 'package:meta/meta.dart';
 import 'package:worker_bee/src/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
-Type _typeOf<T>(T o) => T;
-const void _void = null;
-final _voidType = _typeOf(_void);
+Type _typeOf<T>() => T;
+final _voidType = _typeOf<void>();
 
 /// {@template worker_bee.worker_bee_common}
 /// The common (platform-agnostic) implementations for a worker bee.
@@ -42,7 +41,10 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
     final hasResponseSerializer =
         _serializers.serializerForType(Response) != null;
     // Cannot check `Response != void`
-    if (Response != _voidType && !hasResponseSerializer) {
+    if (Response != _voidType &&
+        // TODO: No determination can be made when Response is nullable
+        _typeOf<Response>() != _typeOf<Response?>() &&
+        !hasResponseSerializer) {
       throw StateError(
         'Worker did not include serializer for response type ($Response)',
       );
