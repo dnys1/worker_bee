@@ -104,17 +104,17 @@ class _$E2EMessageSerializer implements StructuredSerializer<E2EMessage> {
 
     final iterator = serialized.iterator;
     while (iterator.moveNext()) {
-      final key = iterator.current as String;
+      final key = iterator.current! as String;
       iterator.moveNext();
       final Object? value = iterator.current;
       switch (key) {
         case 'bigInt':
           result.bigInt = serializers.deserialize(value,
-              specifiedType: const FullType(BigInt)) as BigInt;
+              specifiedType: const FullType(BigInt))! as BigInt;
           break;
         case 'bool_':
           result.bool_ = serializers.deserialize(value,
-              specifiedType: const FullType(bool)) as bool;
+              specifiedType: const FullType(bool))! as bool;
           break;
         case 'builtList':
           result.builtList.replace(serializers.deserialize(value,
@@ -145,43 +145,43 @@ class _$E2EMessageSerializer implements StructuredSerializer<E2EMessage> {
           break;
         case 'dateTime':
           result.dateTime = serializers.deserialize(value,
-              specifiedType: const FullType(DateTime)) as DateTime;
+              specifiedType: const FullType(DateTime))! as DateTime;
           break;
         case 'double_':
           result.double_ = serializers.deserialize(value,
-              specifiedType: const FullType(double)) as double;
+              specifiedType: const FullType(double))! as double;
           break;
         case 'duration':
           result.duration = serializers.deserialize(value,
-              specifiedType: const FullType(Duration)) as Duration;
+              specifiedType: const FullType(Duration))! as Duration;
           break;
         case 'int_':
           result.int_ = serializers.deserialize(value,
-              specifiedType: const FullType(int)) as int;
+              specifiedType: const FullType(int))! as int;
           break;
         case 'int64':
           result.int64 = serializers.deserialize(value,
-              specifiedType: const FullType(Int64)) as Int64;
+              specifiedType: const FullType(Int64))! as Int64;
           break;
         case 'jsonObject':
           result.jsonObject = serializers.deserialize(value,
-              specifiedType: const FullType(JsonObject)) as JsonObject;
+              specifiedType: const FullType(JsonObject))! as JsonObject;
           break;
         case 'num_':
           result.num_ = serializers.deserialize(value,
-              specifiedType: const FullType(num)) as num;
+              specifiedType: const FullType(num))! as num;
           break;
         case 'regExp':
           result.regExp = serializers.deserialize(value,
-              specifiedType: const FullType(RegExp)) as RegExp;
+              specifiedType: const FullType(RegExp))! as RegExp;
           break;
         case 'string':
           result.string = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
+              specifiedType: const FullType(String))! as String;
           break;
         case 'uri':
           result.uri = serializers.deserialize(value,
-              specifiedType: const FullType(Uri)) as Uri;
+              specifiedType: const FullType(Uri))! as Uri;
           break;
       }
     }
@@ -215,7 +215,7 @@ class _$E2EResultSerializer implements StructuredSerializer<E2EResult> {
 
     final iterator = serialized.iterator;
     while (iterator.moveNext()) {
-      final key = iterator.current as String;
+      final key = iterator.current! as String;
       iterator.moveNext();
       final Object? value = iterator.current;
       switch (key) {

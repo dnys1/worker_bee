@@ -20,6 +20,7 @@ Future<void> _run(SendPorts ports) async {
   Isolate.exit(ports.donePort, result);
 }
 
+/// The VM implementation of [E2EWorkerNoResult].
 class E2EWorkerNoResultImpl extends E2EWorkerNoResult {
   @override
   String get name => 'E2EWorkerNoResult';
