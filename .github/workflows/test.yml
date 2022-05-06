@@ -1,4 +1,4 @@
-# Created with package:mono_repo v6.1.0
+# Created with package:mono_repo v6.2.1
 name: Test
 on:
   push:
@@ -16,11 +16,11 @@ env:
 
 jobs:
   job_001:
-    name: "unit_test; Dart dev; `tool/test.sh`, `tool/test.sh -p chrome`"
+    name: "unit_test; Dart dev; PKG: packages/e2e_test; `tool/test.sh`, `tool/test.sh -p chrome`"
     runs-on: ubuntu-latest
     steps:
       - name: Cache Pub hosted dependencies
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3
         with:
           path: "~/.pub-cache/hosted"
           key: "os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test;commands:command_0-command_1"
@@ -48,11 +48,67 @@ jobs:
         working-directory: packages/e2e_test
         run: tool/test.sh -p chrome
   job_002:
-    name: "unit_test; Dart stable; `tool/test.sh`, `tool/test.sh -p chrome`"
+    name: "unit_test; Dart dev; PKG: packages/worker_bee; `dart test -p chrome`"
     runs-on: ubuntu-latest
     steps:
       - name: Cache Pub hosted dependencies
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/worker_bee;commands:test_1"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/worker_bee
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: dev
+      - id: checkout
+        uses: actions/checkout@v3.0.0
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: "packages/worker_bee; dart test -p chrome"
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart test -p chrome
+  job_003:
+    name: "unit_test; Dart dev; PKG: packages/worker_bee; `dart test`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/worker_bee;commands:test_0"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/worker_bee
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: dev
+      - id: checkout
+        uses: actions/checkout@v3.0.0
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: packages/worker_bee; dart test
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart test
+  job_004:
+    name: "unit_test; Dart stable; PKG: packages/e2e_test; `tool/test.sh`, `tool/test.sh -p chrome`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
         with:
           path: "~/.pub-cache/hosted"
           key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test;commands:command_0-command_1"
@@ -79,3 +135,59 @@ jobs:
         if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
         working-directory: packages/e2e_test
         run: tool/test.sh -p chrome
+  job_005:
+    name: "unit_test; Dart stable; PKG: packages/worker_bee; `dart test -p chrome`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/worker_bee;commands:test_1"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/worker_bee
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+      - id: checkout
+        uses: actions/checkout@v3.0.0
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: "packages/worker_bee; dart test -p chrome"
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart test -p chrome
+  job_006:
+    name: "unit_test; Dart stable; PKG: packages/worker_bee; `dart test`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/worker_bee;commands:test_0"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/worker_bee
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+      - id: checkout
+        uses: actions/checkout@v3.0.0
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: packages/worker_bee; dart test
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart test

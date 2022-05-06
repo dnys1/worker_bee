@@ -7,3 +7,6 @@ stages:
       - group:
           - format
           - analyze: --fatal-infos .
+  - unit_test:
+      - test:
+      - test: -p chrome
