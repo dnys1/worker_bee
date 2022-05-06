@@ -1,6 +1,6 @@
 name: worker_bee
 description: Cross-platform isolated worker runtime
-version: 0.4.5
+version: 0.5.0
 homepage: https://github.com/dnys1/worker_bee
 publish_to: https://pub.dillonnys.com
 
@@ -13,7 +13,7 @@ dependencies:
     hosted: 
       url: https://pub.dillonnys.com
       name: aws_common
-    version: ^0.1.6
+    version: ^0.2.0
   built_collection: ^5.1.1
   built_value: ^8.0.0
   collection: ^1.15.0
