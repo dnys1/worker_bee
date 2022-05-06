@@ -10,6 +10,7 @@ dependencies:
   built_collection: ^5.0.0
   built_value: ^8.0.0
   fixnum: ^1.0.0
+  meta: ^1.7.0
   worker_bee:
     path: ../worker_bee
 

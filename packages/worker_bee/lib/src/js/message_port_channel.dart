@@ -3,7 +3,7 @@ import 'dart:html';
 
 import 'package:built_value/serializer.dart';
 import 'package:worker_bee/src/exception/worker_bee_exception.dart';
-import 'package:worker_bee/src/serializers.dart';
+import 'package:worker_bee/src/serializers/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 /// {@template worker_bee.message_port_channel}
@@ -13,13 +13,18 @@ class MessagePortChannel<T>
     with StreamChannelMixin<T>
     implements StreamSink<T> {
   /// {@macro worker_bee.message_port_channel}
-  MessagePortChannel(this.messagePort, {Serializers? serializers})
-      : _serializers = serializers ?? workerBeeSerializers;
+  MessagePortChannel(
+    this.messagePort, {
+    Serializers? serializers,
+    FullType specifiedType = FullType.unspecified,
+  })  : _serializers = serializers ?? workerBeeSerializers,
+        _specifiedType = specifiedType;
 
   /// The message port to communicate over.
   final MessagePort messagePort;
 
   final Serializers _serializers;
+  final FullType _specifiedType;
 
   @override
   StreamSink<T> get sink => this;
@@ -30,7 +35,7 @@ class MessagePortChannel<T>
           handleData: (event, sink) {
             final data = _serializers.deserialize(
               event.data,
-              specifiedType: FullType.unspecified,
+              specifiedType: _specifiedType,
             );
             if (data is T) {
               sink.add(data);
@@ -42,10 +47,19 @@ class MessagePortChannel<T>
       );
 
   @override
-  void add(T event) => messagePort.postMessage(_serializers.serialize(
+  void add(T event) {
+    final transfer = <Object>[];
+    final serialized = runZoned(
+      () => _serializers.serialize(
         event,
-        specifiedType: FullType.unspecified,
-      ));
+        specifiedType: _specifiedType,
+      ),
+      zoneValues: {
+        #transfer: transfer,
+      },
+    );
+    messagePort.postMessage(serialized, transfer);
+  }
 
   @override
   void addError(Object error, [StackTrace? stackTrace]) {

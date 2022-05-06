@@ -7,6 +7,7 @@ part of 'e2e_message.dart';
 // **************************************************************************
 
 Serializers _$serializers = (new Serializers().toBuilder()
+      ..add(CustomType.serializer)
       ..add(E2EMessage.serializer)
       ..add(E2EResult.serializer)
       ..addBuilderFactory(
@@ -28,8 +29,49 @@ Serializers _$serializers = (new Serializers().toBuilder()
               const [const FullType(String), const FullType(String)]),
           () => new SetMultimapBuilder<String, String>()))
     .build();
+Serializer<CustomType> _$customTypeSerializer = new _$CustomTypeSerializer();
 Serializer<E2EMessage> _$e2EMessageSerializer = new _$E2EMessageSerializer();
 Serializer<E2EResult> _$e2EResultSerializer = new _$E2EResultSerializer();
+
+class _$CustomTypeSerializer implements StructuredSerializer<CustomType> {
+  @override
+  final Iterable<Type> types = const [CustomType, _$CustomType];
+  @override
+  final String wireName = 'CustomType';
+
+  @override
+  Iterable<Object?> serialize(Serializers serializers, CustomType object,
+      {FullType specifiedType = FullType.unspecified}) {
+    final result = <Object?>[
+      'customField',
+      serializers.serialize(object.customField,
+          specifiedType: const FullType(String)),
+    ];
+
+    return result;
+  }
+
+  @override
+  CustomType deserialize(Serializers serializers, Iterable<Object?> serialized,
+      {FullType specifiedType = FullType.unspecified}) {
+    final result = new CustomTypeBuilder();
+
+    final iterator = serialized.iterator;
+    while (iterator.moveNext()) {
+      final key = iterator.current! as String;
+      iterator.moveNext();
+      final Object? value = iterator.current;
+      switch (key) {
+        case 'customField':
+          result.customField = serializers.deserialize(value,
+              specifiedType: const FullType(String))! as String;
+          break;
+      }
+    }
+
+    return result.build();
+  }
+}
 
 class _$E2EMessageSerializer implements StructuredSerializer<E2EMessage> {
   @override
@@ -92,6 +134,14 @@ class _$E2EMessageSerializer implements StructuredSerializer<E2EMessage> {
           specifiedType: const FullType(String)),
       'uri',
       serializers.serialize(object.uri, specifiedType: const FullType(Uri)),
+      'intStreamUncast',
+      serializers.serialize(object.intStreamUncast,
+          specifiedType:
+              const FullType(Stream, const [const FullType.nullable(Object)])),
+      'customTypeStreamUncast',
+      serializers.serialize(object.customTypeStreamUncast,
+          specifiedType:
+              const FullType(Stream, const [const FullType.nullable(Object)])),
     ];
 
     return result;
@@ -183,6 +233,18 @@ class _$E2EMessageSerializer implements StructuredSerializer<E2EMessage> {
           result.uri = serializers.deserialize(value,
               specifiedType: const FullType(Uri))! as Uri;
           break;
+        case 'intStreamUncast':
+          result.intStreamUncast = serializers.deserialize(value,
+                  specifiedType: const FullType(
+                      Stream, const [const FullType.nullable(Object)]))!
+              as Stream<Object?>;
+          break;
+        case 'customTypeStreamUncast':
+          result.customTypeStreamUncast = serializers.deserialize(value,
+                  specifiedType: const FullType(
+                      Stream, const [const FullType.nullable(Object)]))!
+              as Stream<Object?>;
+          break;
       }
     }
 
@@ -230,6 +292,84 @@ class _$E2EResultSerializer implements StructuredSerializer<E2EResult> {
   }
 }
 
+class _$CustomType extends CustomType {
+  @override
+  final String customField;
+
+  factory _$CustomType([void Function(CustomTypeBuilder)? updates]) =>
+      (new CustomTypeBuilder()..update(updates)).build();
+
+  _$CustomType._({required this.customField}) : super._() {
+    BuiltValueNullFieldError.checkNotNull(
+        customField, 'CustomType', 'customField');
+  }
+
+  @override
+  CustomType rebuild(void Function(CustomTypeBuilder) updates) =>
+      (toBuilder()..update(updates)).build();
+
+  @override
+  CustomTypeBuilder toBuilder() => new CustomTypeBuilder()..replace(this);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(other, this)) return true;
+    return other is CustomType && customField == other.customField;
+  }
+
+  @override
+  int get hashCode {
+    return $jf($jc(0, customField.hashCode));
+  }
+
+  @override
+  String toString() {
+    return (newBuiltValueToStringHelper('CustomType')
+          ..add('customField', customField))
+        .toString();
+  }
+}
+
+class CustomTypeBuilder implements Builder<CustomType, CustomTypeBuilder> {
+  _$CustomType? _$v;
+
+  String? _customField;
+  String? get customField => _$this._customField;
+  set customField(String? customField) => _$this._customField = customField;
+
+  CustomTypeBuilder();
+
+  CustomTypeBuilder get _$this {
+    final $v = _$v;
+    if ($v != null) {
+      _customField = $v.customField;
+      _$v = null;
+    }
+    return this;
+  }
+
+  @override
+  void replace(CustomType other) {
+    ArgumentError.checkNotNull(other, 'other');
+    _$v = other as _$CustomType;
+  }
+
+  @override
+  void update(void Function(CustomTypeBuilder)? updates) {
+    if (updates != null) updates(this);
+  }
+
+  @override
+  _$CustomType build() {
+    final _$result = _$v ??
+        new _$CustomType._(
+            customField: BuiltValueNullFieldError.checkNotNull(
+                customField, 'CustomType', 'customField'));
+    replace(_$result);
+    return _$result;
+  }
+}
+
 class _$E2EMessage extends E2EMessage {
   @override
   final BigInt bigInt;
@@ -265,6 +405,10 @@ class _$E2EMessage extends E2EMessage {
   final String string;
   @override
   final Uri uri;
+  @override
+  final Stream<Object?> intStreamUncast;
+  @override
+  final Stream<Object?> customTypeStreamUncast;
 
   factory _$E2EMessage([void Function(E2EMessageBuilder)? updates]) =>
       (new E2EMessageBuilder()..update(updates)).build();
@@ -286,7 +430,9 @@ class _$E2EMessage extends E2EMessage {
       required this.num_,
       required this.regExp,
       required this.string,
-      required this.uri})
+      required this.uri,
+      required this.intStreamUncast,
+      required this.customTypeStreamUncast})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(bigInt, 'E2EMessage', 'bigInt');
     BuiltValueNullFieldError.checkNotNull(bool_, 'E2EMessage', 'bool_');
@@ -308,6 +454,10 @@ class _$E2EMessage extends E2EMessage {
     BuiltValueNullFieldError.checkNotNull(regExp, 'E2EMessage', 'regExp');
     BuiltValueNullFieldError.checkNotNull(string, 'E2EMessage', 'string');
     BuiltValueNullFieldError.checkNotNull(uri, 'E2EMessage', 'uri');
+    BuiltValueNullFieldError.checkNotNull(
+        intStreamUncast, 'E2EMessage', 'intStreamUncast');
+    BuiltValueNullFieldError.checkNotNull(
+        customTypeStreamUncast, 'E2EMessage', 'customTypeStreamUncast');
   }
 
   @override
@@ -337,7 +487,9 @@ class _$E2EMessage extends E2EMessage {
         num_ == other.num_ &&
         regExp == other.regExp &&
         string == other.string &&
-        uri == other.uri;
+        uri == other.uri &&
+        intStreamUncast == other.intStreamUncast &&
+        customTypeStreamUncast == other.customTypeStreamUncast;
   }
 
   @override
@@ -359,28 +511,34 @@ class _$E2EMessage extends E2EMessage {
                                                             $jc(
                                                                 $jc(
                                                                     $jc(
-                                                                        0,
-                                                                        bigInt
+                                                                        $jc(
+                                                                            $jc(
+                                                                                0,
+                                                                                bigInt
+                                                                                    .hashCode),
+                                                                            bool_
+                                                                                .hashCode),
+                                                                        builtList
                                                                             .hashCode),
-                                                                    bool_
+                                                                    builtListMultimap
                                                                         .hashCode),
-                                                                builtList
+                                                                builtMap
                                                                     .hashCode),
-                                                            builtListMultimap
-                                                                .hashCode),
-                                                        builtMap.hashCode),
-                                                    builtSet.hashCode),
-                                                builtSetMultimap.hashCode),
-                                            dateTime.hashCode),
-                                        double_.hashCode),
-                                    duration.hashCode),
-                                int_.hashCode),
-                            int64.hashCode),
-                        jsonObject.hashCode),
-                    num_.hashCode),
-                regExp.hashCode),
-            string.hashCode),
-        uri.hashCode));
+                                                            builtSet.hashCode),
+                                                        builtSetMultimap
+                                                            .hashCode),
+                                                    dateTime.hashCode),
+                                                double_.hashCode),
+                                            duration.hashCode),
+                                        int_.hashCode),
+                                    int64.hashCode),
+                                jsonObject.hashCode),
+                            num_.hashCode),
+                        regExp.hashCode),
+                    string.hashCode),
+                uri.hashCode),
+            intStreamUncast.hashCode),
+        customTypeStreamUncast.hashCode));
   }
 
   @override
@@ -402,7 +560,9 @@ class _$E2EMessage extends E2EMessage {
           ..add('num_', num_)
           ..add('regExp', regExp)
           ..add('string', string)
-          ..add('uri', uri))
+          ..add('uri', uri)
+          ..add('intStreamUncast', intStreamUncast)
+          ..add('customTypeStreamUncast', customTypeStreamUncast))
         .toString();
   }
 }
@@ -488,6 +648,16 @@ class E2EMessageBuilder implements Builder<E2EMessage, E2EMessageBuilder> {
   Uri? get uri => _$this._uri;
   set uri(Uri? uri) => _$this._uri = uri;
 
+  Stream<Object?>? _intStreamUncast;
+  Stream<Object?>? get intStreamUncast => _$this._intStreamUncast;
+  set intStreamUncast(Stream<Object?>? intStreamUncast) =>
+      _$this._intStreamUncast = intStreamUncast;
+
+  Stream<Object?>? _customTypeStreamUncast;
+  Stream<Object?>? get customTypeStreamUncast => _$this._customTypeStreamUncast;
+  set customTypeStreamUncast(Stream<Object?>? customTypeStreamUncast) =>
+      _$this._customTypeStreamUncast = customTypeStreamUncast;
+
   E2EMessageBuilder();
 
   E2EMessageBuilder get _$this {
@@ -510,6 +680,8 @@ class E2EMessageBuilder implements Builder<E2EMessage, E2EMessageBuilder> {
       _regExp = $v.regExp;
       _string = $v.string;
       _uri = $v.uri;
+      _intStreamUncast = $v.intStreamUncast;
+      _customTypeStreamUncast = $v.customTypeStreamUncast;
       _$v = null;
     }
     return this;
@@ -558,7 +730,9 @@ class E2EMessageBuilder implements Builder<E2EMessage, E2EMessageBuilder> {
               regExp: BuiltValueNullFieldError.checkNotNull(
                   regExp, 'E2EMessage', 'regExp'),
               string: BuiltValueNullFieldError.checkNotNull(string, 'E2EMessage', 'string'),
-              uri: BuiltValueNullFieldError.checkNotNull(uri, 'E2EMessage', 'uri'));
+              uri: BuiltValueNullFieldError.checkNotNull(uri, 'E2EMessage', 'uri'),
+              intStreamUncast: BuiltValueNullFieldError.checkNotNull(intStreamUncast, 'E2EMessage', 'intStreamUncast'),
+              customTypeStreamUncast: BuiltValueNullFieldError.checkNotNull(customTypeStreamUncast, 'E2EMessage', 'customTypeStreamUncast'));
     } catch (_) {
       late String _$failedField;
       try {

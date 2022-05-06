@@ -5,7 +5,7 @@ import 'dart:html';
 
 import 'package:collection/collection.dart';
 import 'package:js/js.dart';
-import 'package:worker_bee/src/serializers.dart';
+import 'package:worker_bee/src/serializers/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 import 'message_port_channel.dart';

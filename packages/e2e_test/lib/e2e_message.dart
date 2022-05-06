@@ -3,8 +3,18 @@ import 'package:built_value/built_value.dart';
 import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:meta/meta.dart';
 
 part 'e2e_message.g.dart';
+
+abstract class CustomType implements Built<CustomType, CustomTypeBuilder> {
+  CustomType._();
+  factory CustomType([void Function(CustomTypeBuilder) updates]) = _$CustomType;
+
+  String get customField;
+
+  static Serializer<CustomType> get serializer => _$customTypeSerializer;
+}
 
 abstract class E2EMessage implements Built<E2EMessage, E2EMessageBuilder> {
   factory E2EMessage([void Function(E2EMessageBuilder) updates]) = _$E2EMessage;
@@ -28,6 +38,14 @@ abstract class E2EMessage implements Built<E2EMessage, E2EMessageBuilder> {
   String get string;
   Uri get uri;
 
+  @protected
+  Stream<Object?> get intStreamUncast;
+  Stream<int> get intStream => intStreamUncast.cast();
+
+  @protected
+  Stream<Object?> get customTypeStreamUncast;
+  Stream<CustomType> get customTypeStream => customTypeStreamUncast.cast();
+
   static Serializer<E2EMessage> get serializer => _$e2EMessageSerializer;
 }
 
@@ -43,8 +61,18 @@ abstract class E2EResult implements Built<E2EResult, E2EResultBuilder> {
 @SerializersFor([
   E2EMessage,
   E2EResult,
+  CustomType,
 ])
 final Serializers serializers = _$serializers;
+
+const intStreamElements = [1, 2, 3, 4, 5];
+final customTypeStreamElements = [
+  CustomType((b) => b..customField = 'a'),
+  CustomType((b) => b..customField = 'b'),
+  CustomType((b) => b..customField = 'c'),
+  CustomType((b) => b..customField = 'd'),
+  CustomType((b) => b..customField = 'e'),
+];
 
 E2EMessage get message => E2EMessage(
       (b) => b
@@ -64,5 +92,15 @@ E2EMessage get message => E2EMessage(
         ..num_ = 123
         ..regExp = RegExp(r'^\w{3}$')
         ..string = 'abc'
-        ..uri = Uri.parse('https://example.com'),
+        ..uri = Uri.parse('https://example.com')
+        ..intStreamUncast = Stream.multi(
+          (controller) => controller.addStream(
+            Stream.fromIterable(intStreamElements),
+          ),
+        )
+        ..customTypeStreamUncast = Stream.multi(
+          (controller) => controller.addStream(
+            Stream.fromIterable(customTypeStreamElements),
+          ),
+        ),
     );

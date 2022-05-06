@@ -31,9 +31,27 @@ mixin WorkerBeeImpl<Request extends Object, Response>
     return null;
   }
 
+  /// Runs [action] in an error zone and automatically handles serialization
+  /// of unhandled errors.
+  R _runChained<R>(R Function() action) {
+    return Chain.capture(
+      action,
+
+      // Since this could be called from within a worker, e.g. in the case
+      // of a worker pool, any uncaught errors lose visibility when they're
+      // reported back _unless_ we serialize them first.
+      onError: (Object error, Chain stackTrace) {
+        final workerException = error is WorkerBeeException
+            ? error.rebuild((b) => b.stackTrace = stackTrace)
+            : WorkerBeeExceptionImpl(error, stackTrace);
+        completeError(workerException, stackTrace);
+      },
+    );
+  }
+
   @override
   void completeError(Object error, [StackTrace? stackTrace]) {
-    error = serialize(error) as Object;
+    error = serialize(error).value as Object;
     if (isWebWorker) {
       self.postMessage(error);
     }
@@ -46,24 +64,27 @@ mixin WorkerBeeImpl<Request extends Object, Response>
     StreamChannel<LogMessage>? logsChannel,
   }) async {
     await super.connect(logsChannel: logsChannel);
-    return Chain.capture(
+    return _runChained(
       () async {
         logger.info('Connected from worker');
         final channel = StreamChannelController<Object?>(sync: true);
         self.addEventListener(
           'message',
-          (Event event) {
+          (Event event) => _runChained(() {
             event as MessageEvent;
             logger.fine('Got message: ${event.data}');
             final serialized = event.data as Object?;
             final message = deserialize<Request>(serialized);
             channel.foreign.sink.add(message);
-          },
+          }),
         );
-        channel.foreign.stream.listen((message) {
-          logger.fine('Sending message: $message');
-          self.postMessage(serialize(message));
-        });
+        channel.foreign.stream.listen(
+          (message) => _runChained(() {
+            logger.fine('Sending message: $message');
+            final serialized = serialize(message);
+            self.postMessage(serialized.value, serialized.transfer);
+          }),
+        );
         logger.info('Ready');
         self.postMessage('ready');
         final result = await run(
@@ -72,13 +93,9 @@ mixin WorkerBeeImpl<Request extends Object, Response>
         );
         logger.info('Finished');
         self.postMessage('done');
-        self.postMessage(serialize(result));
-      },
-      onError: (Object error, Chain stackTrace) {
-        completeError(
-          WorkerBeeExceptionImpl(error.toString(), stackTrace),
-          stackTrace,
-        );
+
+        final serializedResult = serialize(result);
+        self.postMessage(serializedResult.value, serializedResult.transfer);
       },
     );
   }
@@ -86,7 +103,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   @override
   @nonVirtual
   Future<void> spawn({String? jsEntrypoint}) async {
-    return Chain.capture(
+    return _runChained(
       () async {
         final entrypoint = jsEntrypoint ?? this.jsEntrypoint;
         logger.info('Spawning worker at $entrypoint');
@@ -122,6 +139,9 @@ mixin WorkerBeeImpl<Request extends Object, Response>
         );
 
         // Listen for error messages on the worker.
+        //
+        // Some browsers do not currently support the `messageerror` event:
+        // https://developer.mozilla.org/en-US/docs/Web/API/Worker/messageerror_event#browser_compatibility
         _worker!.addEventListener('messageerror', (Event event) {
           event as MessageEvent;
           completeError(WorkerBeeExceptionImpl(
@@ -129,77 +149,74 @@ mixin WorkerBeeImpl<Request extends Object, Response>
           ));
         });
         _worker!.onError.listen((Event event) {
-          final eventJson = JSON.stringify(event);
           Object error;
           if (event is ErrorEvent) {
-            error = WorkerBeeExceptionImpl(event.message ?? eventJson);
+            final eventJson = JSON.stringify(event.error);
+            error = WorkerBeeExceptionImpl('${event.message} ($eventJson)');
           } else {
-            error = WorkerBeeExceptionImpl(eventJson);
+            error = WorkerBeeExceptionImpl('An unknown error occurred');
           }
           completeError(error);
         });
 
         // Passes outgoing messages to the worker instance.
-        _controller!.stream.listen((message) {
-          logger.fine('Sending message: $message');
-          _worker!.postMessage(serialize(message));
-        });
+        _controller!.stream.listen(
+          (message) => _runChained(() {
+            logger.fine('Sending message: $message');
+            final serialized = serialize(message);
+            _worker!.postMessage(serialized.value, serialized.transfer);
+          }),
+        );
 
         // Listen to worker
         _incomingMessages = StreamController<Response>(sync: true);
-        _worker!.onMessage.listen((MessageEvent event) {
-          if (event.data is String) {
-            if (event.data == 'ready') {
-              logger.info('Received ready event');
-              ready.complete();
+        _worker!.onMessage.listen(
+          (MessageEvent event) => _runChained(() {
+            if (event.data is String) {
+              if (event.data == 'ready') {
+                logger.info('Received ready event');
+                ready.complete();
+                return;
+              }
+              if (event.data == 'done') {
+                logger.info('Received done event');
+                done = true;
+                return;
+              }
+            }
+            final serialized = event.data as Object?;
+            var message = deserialize(serialized);
+            logger.fine('Got message: $message');
+            if (message is WorkerBeeException) {
+              completeError(message);
               return;
             }
-            if (event.data == 'done') {
-              logger.info('Received done event');
-              done = true;
-              return;
+            message as Response?;
+            if (message is Response) {
+              _incomingMessages!.add(message);
             }
-          }
-          final serialized = event.data as Object?;
-          var message = deserialize(serialized);
-          logger.fine('Got message: $message');
-          if (message is WorkerBeeException) {
-            completeError(message);
-            return;
-          }
-          message as Response?;
-          if (message is Response) {
-            _incomingMessages!.add(message);
-          }
-          if (done) {
-            complete(message);
-          }
-        });
+            if (done) {
+              complete(message);
+            }
+          }),
+        );
 
         stream = _incomingMessages!.stream;
         sink = _controller!.sink;
 
         // Send assignment and logs channel
         final logsChannel = MessageChannel();
-        logsChannel.port1.onMessage.listen((event) {
-          final data = event.data as Object?;
-          final message = deserialize<LogMessage>(data);
-          if (logsController.isClosed) return;
-          logsController.add(message);
-        });
+        logsChannel.port1.onMessage.listen(
+          (event) => _runChained(() {
+            final data = event.data as Object?;
+            final message = deserialize<LogMessage>(data);
+            if (logsController.isClosed) return;
+            logsController.add(message);
+          }),
+        );
         _worker!.postMessage(name, [logsChannel.port2]);
 
         await ready.future;
-      },
-
-      // Since `spawn` could be spawned from within a worker, e.g. in the case
-      // of a worker pool, any uncaught errors lose visibility when they're
-      // reported back _unless_ we serialize them first.
-      onError: (error, chain) {
-        final workerException = error is WorkerBeeException
-            ? error.rebuild((b) => b.stackTrace = chain)
-            : WorkerBeeExceptionImpl(error, chain);
-        completeError(workerException, chain);
       },
     );
   }

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:aws_common/aws_common.dart';
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
-import 'package:worker_bee/src/serializers.dart';
+import 'package:worker_bee/src/serializers/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 Type _typeOf<T>() => T;
@@ -124,16 +124,24 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
 
   /// Serializes an object using the registered `built_value` serializers.
   @protected
-  Object? serialize(Object? object) {
-    return _serializers.serialize(
-      object,
-      // Do not specify type so that it is serialized into the array.
-      specifiedType: FullType.unspecified,
+  WorkerSerializeResult serialize(Object? object) {
+    final transfer = <Object>[];
+    final serialized = runZoned(
+      () => _serializers.serialize(
+        object,
+        // Do not specify type so that it is serialized into the array.
+        specifiedType: FullType.unspecified,
+      ),
+      zoneValues: {
+        #transfer: transfer,
+      },
     );
+    return WorkerSerializeResult(serialized, transfer);
   }
 
   /// Deserializes an object using the registered `built_value` serializers.
   @protected
+  @optionalTypeArgs
   T deserialize<T extends Object?>(Object? object) {
     return _serializers.deserialize(
       object,
