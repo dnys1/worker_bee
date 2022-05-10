@@ -17,7 +17,7 @@ export 'src/exception/worker_bee_exception.dart' show WorkerBeeException;
 export 'src/logger/log_message.dart';
 export 'src/pool/assignment_strategy.dart';
 export 'src/pool/worker_pool.dart';
-export 'src/preamble.dart';
+export 'src/preamble.dart' hide runChained;
 export 'src/worker_bee_vm.dart' if (dart.library.html) 'src/worker_bee_js.dart';
 
 /// {@template worker_bee.worker_bee}

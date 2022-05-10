@@ -7,13 +7,6 @@ import 'package:worker_bee/worker_bee.dart';
 
 part 'serializers.g.dart';
 
-class WorkerSerializeResult {
-  const WorkerSerializeResult(this.value, this.transfer);
-
-  final Object? value;
-  final List<Object> transfer;
-}
-
 /// Serializers common to all worker bees.
 @internal
 @SerializersFor([

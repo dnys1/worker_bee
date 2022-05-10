@@ -3,8 +3,10 @@
 import 'dart:async';
 import 'dart:html';
 
+import 'package:built_value/serializer.dart';
 import 'package:collection/collection.dart';
 import 'package:js/js.dart';
+import 'package:worker_bee/src/preamble.dart';
 import 'package:worker_bee/src/serializers/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
@@ -40,27 +42,43 @@ Uri get currentUri {
 
 /// {@macro worker_bee.get_worker_assignment}
 Future<WorkerAssignment> getWorkerAssignment() async {
-  final assignmentCompleter = Completer<WorkerAssignment>.sync();
-  late dynamic Function(Event) eventListener;
-  self.addEventListener(
-    'message',
-    eventListener = (Event event) {
-      event as MessageEvent;
-      final Object? message = event.data;
-      final MessagePort? messagePort = event.ports.firstOrNull;
-      if (message is String && messagePort is MessagePort) {
-        self.removeEventListener('message', eventListener);
-        assignmentCompleter.complete(WorkerAssignment(
-          message,
-          MessagePortChannel<LogMessage>(messagePort),
-        ));
-      } else {
-        assignmentCompleter.completeError(StateError(
-          'Invalid worker assignment: '
-          '${workerBeeSerializers.serialize(message)}',
-        ));
-      }
+  // Errors in the preamble should be reported to the parent thread.
+  void onError(Object e, StackTrace st) {
+    self.postMessage(workerBeeSerializers.serialize(
+      e,
+      specifiedType: FullType.unspecified,
+    ));
+  }
+
+  return runChained(
+    () async {
+      final assignmentCompleter = Completer<WorkerAssignment>.sync();
+      late dynamic Function(Event) eventListener;
+      self.addEventListener(
+        'message',
+        eventListener = (Event event) => runChained(
+              () {
+                event as MessageEvent;
+                final Object? message = event.data;
+                final MessagePort? messagePort = event.ports.firstOrNull;
+                if (message is String && messagePort is MessagePort) {
+                  self.removeEventListener('message', eventListener);
+                  assignmentCompleter.complete(WorkerAssignment(
+                    message,
+                    MessagePortChannel<LogMessage>(messagePort),
+                  ));
+                } else {
+                  assignmentCompleter.completeError(StateError(
+                    'Invalid worker assignment: '
+                    '${workerBeeSerializers.serialize(message)}',
+                  ));
+                }
+              },
+              onError: onError,
+            ),
+      );
+      return assignmentCompleter.future;
     },
+    onError: onError,
   );
-  return assignmentCompleter.future;
 }

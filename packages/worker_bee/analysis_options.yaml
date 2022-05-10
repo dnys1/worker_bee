@@ -2,4 +2,4 @@ include: package:amplify_lints/dart.yaml
 
 analyzer:
   exclude:
-    - lib/**/*.g.dart
+    - '**/*.g.dart'

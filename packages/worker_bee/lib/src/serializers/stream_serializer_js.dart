@@ -2,10 +2,19 @@ import 'dart:async';
 import 'dart:html';
 
 import 'package:built_value/serializer.dart';
+import 'package:meta/meta.dart';
 import 'package:worker_bee/src/js/message_port_channel.dart';
 import 'package:worker_bee/src/serializers/stream_serializer.dart';
 
+/// {@template worker_bee.serializers.stream_serializer_impl_js}
+/// JS implementation of [StreamSerializer].
+///
+/// Maps each stream to a [MessagePort] and uses `built_value` to
+/// serialize/deserialize values across that port.
+/// {@endtemplate}
+@internal
 class StreamSerializerImpl extends StreamSerializer {
+  /// {@macro worker_bee.serializers.stream_serializer_impl_js}
   const StreamSerializerImpl() : super.protected();
 
   @override

@@ -19,7 +19,7 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
   /// {@template worker_bee.worker_bee_common}
   WorkerBeeCommon({
     Serializers? serializers,
-  }) : _serializers = serializers == null
+  }) : serializers = serializers == null
             ? workerBeeSerializers
             : (serializers.toBuilder()
                   ..addAll(workerBeeSerializers.serializers))
@@ -30,8 +30,7 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
 
   // Check that a serializer for the request and response types are included.
   void _checkSerializers() {
-    final hasRequestSerializer =
-        _serializers.serializerForType(Request) != null;
+    final hasRequestSerializer = serializers.serializerForType(Request) != null;
     if (!hasRequestSerializer) {
       throw StateError(
         'Worker did not include serializer for request type ($Request)',
@@ -39,7 +38,7 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
     }
 
     final hasResponseSerializer =
-        _serializers.serializerForType(Response) != null;
+        serializers.serializerForType(Response) != null;
     // Cannot check `Response != void`
     if (Response != _voidType &&
         // TODO: No determination can be made when Response is nullable
@@ -105,7 +104,8 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
   Stream<LogMessage> get logs => logsController.stream;
 
   /// Serializers for message and result types.
-  final Serializers _serializers;
+  @protected
+  final Serializers serializers;
 
   /// The top-level entrypoint for the VM.
   Function get vmEntrypoint => throw UnimplementedError();
@@ -121,34 +121,6 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
   /// it's not possible to relay that information otherwise.
   /// {@endtemplate}
   String? get workerEntrypointOverride;
-
-  /// Serializes an object using the registered `built_value` serializers.
-  @protected
-  WorkerSerializeResult serialize(Object? object) {
-    final transfer = <Object>[];
-    final serialized = runZoned(
-      () => _serializers.serialize(
-        object,
-        // Do not specify type so that it is serialized into the array.
-        specifiedType: FullType.unspecified,
-      ),
-      zoneValues: {
-        #transfer: transfer,
-      },
-    );
-    return WorkerSerializeResult(serialized, transfer);
-  }
-
-  /// Deserializes an object using the registered `built_value` serializers.
-  @protected
-  @optionalTypeArgs
-  T deserialize<T extends Object?>(Object? object) {
-    return _serializers.deserialize(
-      object,
-      // Do not specify type so that it pulls from the array.
-      specifiedType: FullType.unspecified,
-    ) as T;
-  }
 
   /// Runs the worker in a separate thread/WebWorker.
   ///

@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:meta/meta.dart';
+import 'package:stack_trace/stack_trace.dart';
+import 'package:worker_bee/src/exception/worker_bee_exception.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 export 'vm/preamble.dart' if (dart.library.html) 'js/preamble.dart';
@@ -40,4 +43,26 @@ Future<void> runHive<R>(
   } else {
     await runApp?.call();
   }
+}
+
+/// Runs [action] in an error zone and automatically handles serialization
+/// of unhandled errors.
+@internal
+R runChained<R>(
+  R Function() action, {
+  required void Function(WorkerBeeException, StackTrace) onError,
+}) {
+  return Chain.capture(
+    action,
+
+    // Since this could be called from within a worker, e.g. in the case
+    // of a worker pool, any uncaught errors lose visibility when they're
+    // reported back _unless_ we serialize them first.
+    onError: (Object error, Chain stackTrace) {
+      final workerException = error is WorkerBeeException
+          ? error.rebuild((b) => b.stackTrace = stackTrace)
+          : WorkerBeeExceptionImpl(error, stackTrace);
+      onError(workerException, stackTrace);
+    },
+  );
 }
