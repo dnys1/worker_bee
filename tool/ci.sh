@@ -79,10 +79,6 @@ for PKG in ${PKGS}; do
         echo 'tool/test.sh -p chrome,firefox'
         tool/test.sh -p chrome,firefox || EXIT_CODE=$?
         ;;
-      command_2)
-        echo 'tool/test.sh -p safari'
-        tool/test.sh -p safari || EXIT_CODE=$?
-        ;;
       format)
         echo 'dart format --output=none --set-exit-if-changed .'
         dart format --output=none --set-exit-if-changed . || EXIT_CODE=$?
@@ -98,10 +94,6 @@ for PKG in ${PKGS}; do
       test_2)
         echo 'dart test -p firefox'
         dart test -p firefox || EXIT_CODE=$?
-        ;;
-      test_3)
-        echo 'dart test -p safari'
-        dart test -p safari || EXIT_CODE=$?
         ;;
       *)
         echo -e "\033[31mUnknown TASK '${TASK}' - TERMINATING JOB\033[0m"
