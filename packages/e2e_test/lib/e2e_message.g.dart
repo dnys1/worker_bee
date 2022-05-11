@@ -297,7 +297,7 @@ class _$CustomType extends CustomType {
   final String customField;
 
   factory _$CustomType([void Function(CustomTypeBuilder)? updates]) =>
-      (new CustomTypeBuilder()..update(updates)).build();
+      (new CustomTypeBuilder()..update(updates))._build();
 
   _$CustomType._({required this.customField}) : super._() {
     BuiltValueNullFieldError.checkNotNull(
@@ -360,7 +360,9 @@ class CustomTypeBuilder implements Builder<CustomType, CustomTypeBuilder> {
   }
 
   @override
-  _$CustomType build() {
+  CustomType build() => _build();
+
+  _$CustomType _build() {
     final _$result = _$v ??
         new _$CustomType._(
             customField: BuiltValueNullFieldError.checkNotNull(
@@ -411,7 +413,7 @@ class _$E2EMessage extends E2EMessage {
   final Stream<Object?> customTypeStreamUncast;
 
   factory _$E2EMessage([void Function(E2EMessageBuilder)? updates]) =>
-      (new E2EMessageBuilder()..update(updates)).build();
+      (new E2EMessageBuilder()..update(updates))._build();
 
   _$E2EMessage._(
       {required this.bigInt,
@@ -699,7 +701,9 @@ class E2EMessageBuilder implements Builder<E2EMessage, E2EMessageBuilder> {
   }
 
   @override
-  _$E2EMessage build() {
+  E2EMessage build() => _build();
+
+  _$E2EMessage _build() {
     _$E2EMessage _$result;
     try {
       _$result = _$v ??
@@ -762,7 +766,7 @@ class _$E2EResult extends E2EResult {
   final E2EMessage message;
 
   factory _$E2EResult([void Function(E2EResultBuilder)? updates]) =>
-      (new E2EResultBuilder()..update(updates)).build();
+      (new E2EResultBuilder()..update(updates))._build();
 
   _$E2EResult._({required this.message}) : super._() {
     BuiltValueNullFieldError.checkNotNull(message, 'E2EResult', 'message');
@@ -823,7 +827,9 @@ class E2EResultBuilder implements Builder<E2EResult, E2EResultBuilder> {
   }
 
   @override
-  _$E2EResult build() {
+  E2EResult build() => _build();
+
+  _$E2EResult _build() {
     _$E2EResult _$result;
     try {
       _$result = _$v ?? new _$E2EResult._(message: message.build());
@@ -843,4 +849,4 @@ class E2EResultBuilder implements Builder<E2EResult, E2EResultBuilder> {
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new
+// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,no_leading_underscores_for_local_identifiers,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new

@@ -10,3 +10,8 @@ stages:
   - unit_test:
       - test:
       - test: -p chrome
+      - test: -p firefox
+  - unit_test_safari:
+      - test: -p safari
+        os:
+          - macos

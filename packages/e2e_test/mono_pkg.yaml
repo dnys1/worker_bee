@@ -9,5 +9,11 @@ stages:
           - analyze: --fatal-infos .
   - unit_test:
       - group:
-          - command: tool/test.sh
-          - command: tool/test.sh -p chrome
+          - command: dart run build_runner build --delete-conflicting-outputs
+          - test:
+      - command: tool/test.sh -p chrome
+      - command: tool/test.sh -p firefox
+  - unit_test_safari:
+      - command: tool/test.sh -p safari
+        os:
+          - macos

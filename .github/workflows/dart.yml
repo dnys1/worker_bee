@@ -1,0 +1,129 @@
+# Created with package:mono_repo v6.2.2
+name: Dart CI
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  schedule:
+    - cron: "0 0 * * 0"
+defaults:
+  run:
+    shell: bash
+env:
+  PUB_ENVIRONMENT: bot.github
+
+jobs:
+  job_001:
+    name: "unit_test_safari; Dart dev; PKG: packages/e2e_test; `tool/test.sh -p safari`"
+    runs-on: macos-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:macos-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test;commands:command_3"
+          restore-keys: |
+            os:macos-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test
+            os:macos-latest;pub-cache-hosted;sdk:dev
+            os:macos-latest;pub-cache-hosted
+            os:macos-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: dev
+      - id: checkout
+        uses: actions/checkout@v3
+      - id: packages_e2e_test_pub_upgrade
+        name: packages/e2e_test; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart pub upgrade
+      - name: "packages/e2e_test; tool/test.sh -p safari"
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: tool/test.sh -p safari
+  job_002:
+    name: "unit_test_safari; Dart dev; PKG: packages/worker_bee; `dart test -p safari`"
+    runs-on: macos-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:macos-latest;pub-cache-hosted;sdk:dev;packages:packages/worker_bee;commands:test_3"
+          restore-keys: |
+            os:macos-latest;pub-cache-hosted;sdk:dev;packages:packages/worker_bee
+            os:macos-latest;pub-cache-hosted;sdk:dev
+            os:macos-latest;pub-cache-hosted
+            os:macos-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: dev
+      - id: checkout
+        uses: actions/checkout@v3
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: "packages/worker_bee; dart test -p safari"
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart test -p safari
+  job_003:
+    name: "unit_test_safari; Dart stable; PKG: packages/e2e_test; `tool/test.sh -p safari`"
+    runs-on: macos-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:macos-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test;commands:command_3"
+          restore-keys: |
+            os:macos-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test
+            os:macos-latest;pub-cache-hosted;sdk:stable
+            os:macos-latest;pub-cache-hosted
+            os:macos-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+      - id: checkout
+        uses: actions/checkout@v3
+      - id: packages_e2e_test_pub_upgrade
+        name: packages/e2e_test; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart pub upgrade
+      - name: "packages/e2e_test; tool/test.sh -p safari"
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: tool/test.sh -p safari
+  job_004:
+    name: "unit_test_safari; Dart stable; PKG: packages/worker_bee; `dart test -p safari`"
+    runs-on: macos-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:macos-latest;pub-cache-hosted;sdk:stable;packages:packages/worker_bee;commands:test_3"
+          restore-keys: |
+            os:macos-latest;pub-cache-hosted;sdk:stable;packages:packages/worker_bee
+            os:macos-latest;pub-cache-hosted;sdk:stable
+            os:macos-latest;pub-cache-hosted
+            os:macos-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+      - id: checkout
+        uses: actions/checkout@v3
+      - id: packages_worker_bee_pub_upgrade
+        name: packages/worker_bee; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart pub upgrade
+      - name: "packages/worker_bee; dart test -p safari"
+        if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/worker_bee
+        run: dart test -p safari

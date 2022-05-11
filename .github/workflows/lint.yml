@@ -1,4 +1,4 @@
-# Created with package:mono_repo v6.2.1
+# Created with package:mono_repo v6.2.2
 name: Dart Lint
 on:
   push:
@@ -31,9 +31,9 @@ jobs:
         with:
           sdk: stable
       - id: checkout
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3
       - name: mono_repo self validate
-        run: dart pub global activate mono_repo 6.2.1
+        run: dart pub global activate mono_repo 6.2.2
       - name: mono_repo self validate
         run: dart pub global run mono_repo generate --validate
   job_002:
@@ -54,7 +54,7 @@ jobs:
         with:
           sdk: dev
       - id: checkout
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3
       - id: example_pub_upgrade
         name: example; dart pub upgrade
         if: "always() && steps.checkout.conclusion == 'success'"
@@ -125,7 +125,7 @@ jobs:
         with:
           sdk: stable
       - id: checkout
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3
       - id: example_pub_upgrade
         name: example; dart pub upgrade
         if: "always() && steps.checkout.conclusion == 'success'"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Created with package:mono_repo v6.2.1
+# Created with package:mono_repo v6.2.2
 
 # Support built in commands on windows out of the box.
 # When it is a flutter repo (check the pubspec.yaml for "sdk: flutter")
@@ -72,12 +72,20 @@ for PKG in ${PKGS}; do
         dart analyze --fatal-infos . || EXIT_CODE=$?
         ;;
       command_0)
-        echo 'tool/test.sh'
-        tool/test.sh || EXIT_CODE=$?
+        echo 'dart run build_runner build --delete-conflicting-outputs'
+        dart run build_runner build --delete-conflicting-outputs || EXIT_CODE=$?
         ;;
       command_1)
         echo 'tool/test.sh -p chrome'
         tool/test.sh -p chrome || EXIT_CODE=$?
+        ;;
+      command_2)
+        echo 'tool/test.sh -p firefox'
+        tool/test.sh -p firefox || EXIT_CODE=$?
+        ;;
+      command_3)
+        echo 'tool/test.sh -p safari'
+        tool/test.sh -p safari || EXIT_CODE=$?
         ;;
       format)
         echo 'dart format --output=none --set-exit-if-changed .'
@@ -90,6 +98,14 @@ for PKG in ${PKGS}; do
       test_1)
         echo 'dart test -p chrome'
         dart test -p chrome || EXIT_CODE=$?
+        ;;
+      test_2)
+        echo 'dart test -p firefox'
+        dart test -p firefox || EXIT_CODE=$?
+        ;;
+      test_3)
+        echo 'dart test -p safari'
+        dart test -p safari || EXIT_CODE=$?
         ;;
       *)
         echo -e "\033[31mUnknown TASK '${TASK}' - TERMINATING JOB\033[0m"
