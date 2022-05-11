@@ -48,7 +48,7 @@ jobs:
         working-directory: packages/e2e_test
         run: dart test
   job_002:
-    name: "unit_test; Dart dev; PKG: packages/e2e_test; `tool/test.sh -p chrome,firefox`"
+    name: "unit_test; Dart dev; PKG: packages/e2e_test; `tool/test.sh -p chrome`"
     runs-on: ubuntu-latest
     steps:
       - name: Cache Pub hosted dependencies
@@ -71,11 +71,39 @@ jobs:
         if: "always() && steps.checkout.conclusion == 'success'"
         working-directory: packages/e2e_test
         run: dart pub upgrade
-      - name: "packages/e2e_test; tool/test.sh -p chrome,firefox"
+      - name: "packages/e2e_test; tool/test.sh -p chrome"
         if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
         working-directory: packages/e2e_test
-        run: "tool/test.sh -p chrome,firefox"
+        run: tool/test.sh -p chrome
   job_003:
+    name: "unit_test; Dart dev; PKG: packages/e2e_test; `tool/test.sh -p firefox`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test;commands:command_2"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test
+            os:ubuntu-latest;pub-cache-hosted;sdk:dev
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: dev
+      - id: checkout
+        uses: actions/checkout@v3
+      - id: packages_e2e_test_pub_upgrade
+        name: packages/e2e_test; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart pub upgrade
+      - name: "packages/e2e_test; tool/test.sh -p firefox"
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: tool/test.sh -p firefox
+  job_004:
     name: "unit_test; Dart dev; PKG: packages/worker_bee; `dart test -p chrome`"
     runs-on: ubuntu-latest
     steps:
@@ -103,7 +131,7 @@ jobs:
         if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
         working-directory: packages/worker_bee
         run: dart test -p chrome
-  job_004:
+  job_005:
     name: "unit_test; Dart dev; PKG: packages/worker_bee; `dart test -p firefox`"
     runs-on: ubuntu-latest
     steps:
@@ -131,7 +159,7 @@ jobs:
         if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
         working-directory: packages/worker_bee
         run: dart test -p firefox
-  job_005:
+  job_006:
     name: "unit_test; Dart dev; PKG: packages/worker_bee; `dart test`"
     runs-on: ubuntu-latest
     steps:
@@ -159,7 +187,7 @@ jobs:
         if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
         working-directory: packages/worker_bee
         run: dart test
-  job_006:
+  job_007:
     name: "unit_test; Dart stable; PKG: packages/e2e_test; `dart run build_runner build --delete-conflicting-outputs`, `dart test`"
     runs-on: ubuntu-latest
     steps:
@@ -191,8 +219,8 @@ jobs:
         if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
         working-directory: packages/e2e_test
         run: dart test
-  job_007:
-    name: "unit_test; Dart stable; PKG: packages/e2e_test; `tool/test.sh -p chrome,firefox`"
+  job_008:
+    name: "unit_test; Dart stable; PKG: packages/e2e_test; `tool/test.sh -p chrome`"
     runs-on: ubuntu-latest
     steps:
       - name: Cache Pub hosted dependencies
@@ -215,11 +243,39 @@ jobs:
         if: "always() && steps.checkout.conclusion == 'success'"
         working-directory: packages/e2e_test
         run: dart pub upgrade
-      - name: "packages/e2e_test; tool/test.sh -p chrome,firefox"
+      - name: "packages/e2e_test; tool/test.sh -p chrome"
         if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
         working-directory: packages/e2e_test
-        run: "tool/test.sh -p chrome,firefox"
-  job_008:
+        run: tool/test.sh -p chrome
+  job_009:
+    name: "unit_test; Dart stable; PKG: packages/e2e_test; `tool/test.sh -p firefox`"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Pub hosted dependencies
+        uses: actions/cache@v3
+        with:
+          path: "~/.pub-cache/hosted"
+          key: "os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test;commands:command_2"
+          restore-keys: |
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test
+            os:ubuntu-latest;pub-cache-hosted;sdk:stable
+            os:ubuntu-latest;pub-cache-hosted
+            os:ubuntu-latest
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: stable
+      - id: checkout
+        uses: actions/checkout@v3
+      - id: packages_e2e_test_pub_upgrade
+        name: packages/e2e_test; dart pub upgrade
+        if: "always() && steps.checkout.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: dart pub upgrade
+      - name: "packages/e2e_test; tool/test.sh -p firefox"
+        if: "always() && steps.packages_e2e_test_pub_upgrade.conclusion == 'success'"
+        working-directory: packages/e2e_test
+        run: tool/test.sh -p firefox
+  job_010:
     name: "unit_test; Dart stable; PKG: packages/worker_bee; `dart test -p chrome`"
     runs-on: ubuntu-latest
     steps:
@@ -247,7 +303,7 @@ jobs:
         if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
         working-directory: packages/worker_bee
         run: dart test -p chrome
-  job_009:
+  job_011:
     name: "unit_test; Dart stable; PKG: packages/worker_bee; `dart test -p firefox`"
     runs-on: ubuntu-latest
     steps:
@@ -275,7 +331,7 @@ jobs:
         if: "always() && steps.packages_worker_bee_pub_upgrade.conclusion == 'success'"
         working-directory: packages/worker_bee
         run: dart test -p firefox
-  job_010:
+  job_012:
     name: "unit_test; Dart stable; PKG: packages/worker_bee; `dart test`"
     runs-on: ubuntu-latest
     steps:
