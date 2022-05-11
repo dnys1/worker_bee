@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "~/.pub-cache/hosted"
-          key: "os:macos-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test;commands:command_3"
+          key: "os:macos-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test;commands:command_2"
           restore-keys: |
             os:macos-latest;pub-cache-hosted;sdk:dev;packages:packages/e2e_test
             os:macos-latest;pub-cache-hosted;sdk:dev
@@ -79,7 +79,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "~/.pub-cache/hosted"
-          key: "os:macos-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test;commands:command_3"
+          key: "os:macos-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test;commands:command_2"
           restore-keys: |
             os:macos-latest;pub-cache-hosted;sdk:stable;packages:packages/e2e_test
             os:macos-latest;pub-cache-hosted;sdk:stable
