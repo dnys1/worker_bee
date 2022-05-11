@@ -50,32 +50,31 @@ Future<WorkerAssignment> getWorkerAssignment() async {
     ));
   }
 
-  return runChained(
+  return runTraced(
     () async {
       final assignmentCompleter = Completer<WorkerAssignment>.sync();
       late dynamic Function(Event) eventListener;
       self.addEventListener(
         'message',
-        eventListener = (Event event) => runChained(
-              () {
-                event as MessageEvent;
-                final Object? message = event.data;
-                final MessagePort? messagePort = event.ports.firstOrNull;
-                if (message is String && messagePort is MessagePort) {
-                  self.removeEventListener('message', eventListener);
-                  assignmentCompleter.complete(WorkerAssignment(
-                    message,
-                    MessagePortChannel<LogMessage>(messagePort),
-                  ));
-                } else {
-                  assignmentCompleter.completeError(StateError(
-                    'Invalid worker assignment: '
-                    '${workerBeeSerializers.serialize(message)}',
-                  ));
-                }
-              },
-              onError: onError,
-            ),
+        eventListener = Zone.current.bindUnaryCallback<void, Event>(
+          (Event event) {
+            event as MessageEvent;
+            final Object? message = event.data;
+            final MessagePort? messagePort = event.ports.firstOrNull;
+            if (message is String && messagePort is MessagePort) {
+              self.removeEventListener('message', eventListener);
+              assignmentCompleter.complete(WorkerAssignment(
+                message,
+                MessagePortChannel<LogMessage>(messagePort),
+              ));
+            } else {
+              assignmentCompleter.completeError(StateError(
+                'Invalid worker assignment: '
+                '${workerBeeSerializers.serialize(message)}',
+              ));
+            }
+          },
+        ),
       );
       return assignmentCompleter.future;
     },

@@ -87,33 +87,27 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   Future<void> connect({
     StreamChannel<LogMessage>? logsChannel,
   }) async {
-    await super.connect(logsChannel: logsChannel);
-    return runChained(
+    return runTraced(
       () async {
+        await super.connect(logsChannel: logsChannel);
         logger.info('Connected from worker');
         final channel = StreamChannelController<Object?>(sync: true);
         self.addEventListener(
           'message',
-          (Event event) => runChained(
-            () {
-              event as MessageEvent;
-              logger.fine('Got message: ${event.data}');
-              final serialized = event.data as Object?;
-              final message = _deserialize<Request>(serialized);
-              channel.foreign.sink.add(message);
-            },
-            onError: completeError,
-          ),
+          Zone.current.bindUnaryCallback<void, Event>((Event event) {
+            event as MessageEvent;
+            logger.fine('Got message: ${event.data}');
+            final serialized = event.data as Object?;
+            final message = _deserialize<Request>(serialized);
+            channel.foreign.sink.add(message);
+          }),
         );
         channel.foreign.stream.listen(
-          (message) => runChained(
-            () {
-              logger.fine('Sending message: $message');
-              final serialized = _serialize(message);
-              self.postMessage(serialized.value, serialized.transfer);
-            },
-            onError: completeError,
-          ),
+          Zone.current.bindUnaryCallback((message) {
+            logger.fine('Sending message: $message');
+            final serialized = _serialize(message);
+            self.postMessage(serialized.value, serialized.transfer);
+          }),
         );
         logger.info('Ready');
         self.postMessage('ready');
@@ -134,7 +128,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   @override
   @nonVirtual
   Future<void> spawn({String? jsEntrypoint}) async {
-    return runChained(
+    return runTraced(
       () async {
         final entrypoint = jsEntrypoint ?? this.jsEntrypoint;
         logger.info('Spawning worker at $entrypoint');
@@ -192,50 +186,44 @@ mixin WorkerBeeImpl<Request extends Object, Response>
 
         // Passes outgoing messages to the worker instance.
         _controller!.stream.listen(
-          (message) => runChained(
-            () {
-              logger.fine('Sending message: $message');
-              final serialized = _serialize(message);
-              _worker!.postMessage(serialized.value, serialized.transfer);
-            },
-            onError: completeError,
-          ),
+          Zone.current.bindUnaryCallback((message) {
+            logger.fine('Sending message: $message');
+            final serialized = _serialize(message);
+            _worker!.postMessage(serialized.value, serialized.transfer);
+          }),
         );
 
         // Listen to worker
         _incomingMessages = StreamController<Response>(sync: true);
         _worker!.onMessage.listen(
-          (MessageEvent event) => runChained(
-            () {
-              if (event.data is String) {
-                if (event.data == 'ready') {
-                  logger.info('Received ready event');
-                  ready.complete();
-                  return;
-                }
-                if (event.data == 'done') {
-                  logger.info('Received done event');
-                  done = true;
-                  return;
-                }
-              }
-              final serialized = event.data as Object?;
-              var message = _deserialize(serialized);
-              logger.fine('Got message: $message');
-              if (message is WorkerBeeException) {
-                completeError(message);
+          Zone.current.bindUnaryCallback((MessageEvent event) {
+            if (event.data is String) {
+              if (event.data == 'ready') {
+                logger.info('Received ready event');
+                ready.complete();
                 return;
               }
-              message as Response?;
-              if (message is Response) {
-                _incomingMessages!.add(message);
+              if (event.data == 'done') {
+                logger.info('Received done event');
+                done = true;
+                return;
               }
-              if (done) {
-                complete(message);
-              }
-            },
-            onError: completeError,
-          ),
+            }
+            final serialized = event.data as Object?;
+            var message = _deserialize(serialized);
+            logger.fine('Got message: $message');
+            if (message is WorkerBeeException) {
+              completeError(message);
+              return;
+            }
+            message as Response?;
+            if (message is Response) {
+              _incomingMessages!.add(message);
+            }
+            if (done) {
+              complete(message);
+            }
+          }),
         );
 
         stream = _incomingMessages!.stream;
@@ -244,15 +232,12 @@ mixin WorkerBeeImpl<Request extends Object, Response>
         // Send assignment and logs channel
         final logsChannel = MessageChannel();
         logsChannel.port1.onMessage.listen(
-          (event) => runChained(
-            () {
-              final data = event.data as Object?;
-              final message = _deserialize<LogMessage>(data);
-              if (logsController.isClosed) return;
-              logsController.add(message);
-            },
-            onError: completeError,
-          ),
+          Zone.current.bindUnaryCallback((event) {
+            final data = event.data as Object?;
+            final message = _deserialize<LogMessage>(data);
+            if (logsController.isClosed) return;
+            logsController.add(message);
+          }),
         );
         _worker!.postMessage(name, [logsChannel.port2]);
 

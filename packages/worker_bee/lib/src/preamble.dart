@@ -48,21 +48,21 @@ Future<void> runHive<R>(
 /// Runs [action] in an error zone and automatically handles serialization
 /// of unhandled errors.
 @internal
-R runChained<R>(
+R runTraced<R>(
   R Function() action, {
   required void Function(WorkerBeeException, StackTrace) onError,
 }) {
-  return Chain.capture(
-    action,
-
-    // Since this could be called from within a worker, e.g. in the case
-    // of a worker pool, any uncaught errors lose visibility when they're
-    // reported back _unless_ we serialize them first.
-    onError: (Object error, Chain stackTrace) {
-      final workerException = error is WorkerBeeException
-          ? error.rebuild((b) => b.stackTrace = stackTrace)
-          : WorkerBeeExceptionImpl(error, stackTrace);
-      onError(workerException, stackTrace);
-    },
-  );
+  // Since this could be called from within a worker, e.g. in the case
+  // of a worker pool, any uncaught errors lose visibility when they're
+  // reported back _unless_ we serialize them first.
+  void wrappedOnError(Object error, StackTrace stackTrace) {
+    final workerException = error is WorkerBeeException
+        ? error.rebuild((b) => b.stackTrace = stackTrace)
+        : WorkerBeeExceptionImpl(error, stackTrace);
+    onError(workerException, stackTrace);
+  }
+    return Chain.capture(
+      action,
+      onError: wrappedOnError,
+    );
 }
