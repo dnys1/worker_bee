@@ -21,6 +21,10 @@ void main() {
     group('| null result', () {
       test('VM', () => testWorkerNullResult());
     });
+
+    group('| throws', () {
+      test('VM', () => testWorkerThrows());
+    });
   });
 
   group('WorkerPool', () {

@@ -12,4 +12,5 @@ final workers = <String, WorkerBeeBuilder>{
   'E2EWorkerVoidResult': E2EWorkerVoidResult.create,
   'E2EWorkerNullResult': E2EWorkerNullResult.create,
   'E2EWorkerPool': E2EWorkerPool.create,
+  'E2EWorkerThrows': E2EWorkerThrows.create,
 };

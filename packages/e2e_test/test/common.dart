@@ -3,6 +3,7 @@ import 'package:e2e_test/e2e_worker.dart';
 import 'package:e2e_test/e2e_worker_no_result.dart';
 import 'package:e2e_test/e2e_worker_null_result.dart';
 import 'package:e2e_test/e2e_worker_pool.dart';
+import 'package:e2e_test/e2e_worker_throws.dart';
 import 'package:e2e_test/e2e_worker_void_result.dart';
 import 'package:test/test.dart';
 import 'package:worker_bee/worker_bee.dart';
@@ -47,6 +48,18 @@ Future<void> testWorker({String? jsEntrypoint}) async {
   for (final workerMessage in [...messages, result].map((el) => el!.message)) {
     _expectMessage(workerMessage);
   }
+}
+
+Future<void> testWorkerThrows({String? jsEntrypoint}) async {
+  final _message = message;
+
+  final worker = E2EWorkerThrows.create();
+  worker.logs.listen(print);
+  await worker.spawn(jsEntrypoint: jsEntrypoint);
+  worker.add(_message);
+
+  expect(worker.stream, emitsError(anything));
+  expect(worker.result, completion(isA<ErrorResult>()));
 }
 
 Future<void> testWorkerNoResult({String? jsEntrypoint}) async {

@@ -213,6 +213,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
             var message = _deserialize(serialized);
             logger.fine('Got message: $message');
             if (message is WorkerBeeException) {
+              _incomingMessages!.addError(message, message.stackTrace);
               completeError(message);
               return;
             }

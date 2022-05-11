@@ -69,6 +69,22 @@ void main() {
         ),
       );
     });
+
+    group('| throws', () {
+      test(
+        'dart2Js',
+        () => testWorkerThrows(
+          jsEntrypoint: 'packages/e2e_test/workers.js',
+        ),
+      );
+
+      test(
+        'dart2Js (m, O4)',
+        () => testWorkerThrows(
+          jsEntrypoint: 'packages/e2e_test/workers.min.js',
+        ),
+      );
+    });
   });
 
   group('WorkerPool', () {
