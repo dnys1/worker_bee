@@ -45,6 +45,15 @@ Future<void> runHive<R>(
   }
 }
 
+bool get _isDebugMode {
+  var isDebugMode = false;
+  // ignore: prefer_asserts_with_message
+  assert(() {
+    return isDebugMode = true;
+  }());
+  return isDebugMode;
+}
+
 /// Runs [action] in an error zone and automatically handles serialization
 /// of unhandled errors.
 @internal
@@ -61,8 +70,12 @@ R runTraced<R>(
         : WorkerBeeExceptionImpl(error, stackTrace);
     onError(workerException, stackTrace);
   }
+
+  if (_isDebugMode) {
     return Chain.capture(
       action,
       onError: wrappedOnError,
     );
+  }
+  return runZonedGuarded(action, wrappedOnError)!;
 }
