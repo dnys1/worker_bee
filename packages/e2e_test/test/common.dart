@@ -27,11 +27,11 @@ void _expectMessage(E2EMessage workerMessage) {
   expect(workerMessage.num_, equals(_message.num_));
   expect(workerMessage.regExp.pattern, equals(_message.regExp.pattern));
   expect(workerMessage.uri, equals(_message.uri));
-  expect(workerMessage.intStream, emitsInOrder(intStreamElements));
-  expect(
-    workerMessage.customTypeStream,
-    emitsInOrder(customTypeStreamElements),
-  );
+  // expect(workerMessage.intStream, emitsInOrder(intStreamElements));
+  // expect(
+  //   workerMessage.customTypeStream,
+  //   emitsInOrder(customTypeStreamElements),
+  // );
 }
 
 Future<void> testWorker({String? jsEntrypoint}) async {

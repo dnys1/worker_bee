@@ -20,6 +20,7 @@ import 'stream_serializer_io.dart'
 /// }
 /// ```
 /// {@endtemplate}
+@internal
 abstract class StreamSerializer
     implements PrimitiveSerializer<Stream<Object?>> {
   /// {@macro worker_bee.serializers.stream_serializer}
