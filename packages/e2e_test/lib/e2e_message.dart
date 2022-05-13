@@ -3,7 +3,6 @@ import 'package:built_value/built_value.dart';
 import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:meta/meta.dart';
 
 part 'e2e_message.g.dart';
 
