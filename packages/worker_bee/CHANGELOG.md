@@ -1,3 +1,7 @@
+## 0.5.1
+
+ - **FIX**: Revert stream serialization.
+
 ## 0.5.0
 
 ## 0.4.5
