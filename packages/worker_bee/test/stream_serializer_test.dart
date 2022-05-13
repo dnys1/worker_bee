@@ -1,3 +1,5 @@
+@Skip('Re-enable when StreamSerializer is added back')
+
 import 'package:built_value/serializer.dart';
 import 'package:test/test.dart';
 import 'package:worker_bee/src/serializers/serializers.dart';
