@@ -118,6 +118,12 @@ void main() {
           jsEntrypoint: 'packages/e2e_test/workers.min.js',
         ),
       );
+    }, onPlatform: {
+      'safari': Skip(
+        'Nested workers are not available in Safari:\n'
+        'https://developer.mozilla.org/en-US/docs/Web/API/Worker\n'
+        'https://bugs.webkit.org/show_bug.cgi?id=22723',
+      ),
     });
   });
 }

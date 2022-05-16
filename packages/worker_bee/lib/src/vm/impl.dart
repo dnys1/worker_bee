@@ -51,7 +51,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
 
   @override
   Future<void> spawn({String? jsEntrypoint}) async {
-    logger.info('Starting worker');
+    logger.finest('Starting worker');
     final receivePort = ReceivePort(name);
     final channel = IsolateChannel<Object?>.connectReceive(receivePort);
 
@@ -60,7 +60,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
 
     // Listen to stream to activate transformer.
     stream.listen((message) {
-      logger.fine('Got message: $message');
+      logger.finest('Got message: $message');
     });
 
     final logPort = ReceivePort('${name}_logs');
@@ -86,16 +86,19 @@ mixin WorkerBeeImpl<Request extends Object, Response>
       onError: errorPort.sendPort,
     );
     donePort.first.then<void>((dynamic result) {
+      if (isCompleted) return;
       if (result is Response?) {
         complete(result);
       } else {
         completeError(Exception('Unexpected result: $result'));
       }
     });
-    exitPort.first.then<void>((dynamic result) {
+    exitPort.first.then<void>((dynamic _) {
+      if (isCompleted) return;
       completeError(Exception('Worker quit unexpectedly'));
     });
     errorPort.first.then<void>((dynamic error) {
+      if (isCompleted) return;
       error as List<Object?>;
       final message = error[0] as String;
       final stackTraceString = error[1] as String?;
@@ -107,9 +110,12 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   }
 
   @override
-  Future<void> close() async {
+  Future<void> close({
+    bool force = false,
+  }) async {
+    await super.close(force: force);
+    await logsController.close();
     _isolate?.kill();
     _isolate = null;
-    await super.close();
   }
 }

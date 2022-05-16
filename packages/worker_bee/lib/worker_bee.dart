@@ -8,7 +8,7 @@ import 'package:built_value/serializer.dart';
 import 'package:worker_bee/src/common.dart';
 
 import 'src/preamble.dart';
-import 'src/vm/impl.dart' if (dart.library.html) 'src/js/impl.dart';
+import 'src/vm/impl.dart' if (dart.library.js) 'src/js/impl.dart';
 
 export 'package:async/async.dart';
 export 'package:logging/logging.dart';
@@ -18,7 +18,7 @@ export 'src/logger/log_message.dart';
 export 'src/pool/assignment_strategy.dart';
 export 'src/pool/worker_pool.dart';
 export 'src/preamble.dart' hide runTraced;
-export 'src/worker_bee_vm.dart' if (dart.library.html) 'src/worker_bee_js.dart';
+export 'src/worker_bee_vm.dart' if (dart.library.js) 'src/worker_bee_js.dart';
 
 /// {@template worker_bee.worker_bee}
 /// Annotation class for marking worker bees.

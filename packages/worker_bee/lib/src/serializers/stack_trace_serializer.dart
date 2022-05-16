@@ -28,18 +28,22 @@ class StackTraceSerializer implements PrimitiveSerializer<StackTrace> {
     Object serialized, {
     FullType specifiedType = FullType.unspecified,
   }) {
+    StackTrace? stackTrace;
     if (serialized is StackTrace) {
-      return serialized;
+      stackTrace = serialized;
     }
     if (serialized is String) {
-      return Trace.parse(serialized);
+      stackTrace = Trace.parse(serialized);
     }
     if (serialized is List<String>) {
-      return Trace(serialized.map(Frame.parseFriendly));
+      stackTrace = Trace(serialized.map(Frame.parseFriendly));
     }
-    throw ArgumentError(
-      'Unknown StackFrame type (${serialized.runtimeType}): $serialized',
-    );
+    if (stackTrace == null) {
+      throw ArgumentError(
+        'Unknown StackFrame type (${serialized.runtimeType}): $serialized',
+      );
+    }
+    return stackTrace;
   }
 
   @override

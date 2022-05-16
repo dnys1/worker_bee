@@ -51,9 +51,11 @@ abstract class WorkerPoolBase<Request extends Object, Response,
   }
 
   @override
-  Future close() async {
-    await super.close();
+  Future<void> close({
+    bool force = false,
+  }) async {
     await _pool?.close();
+    await super.close(force: force);
   }
 }
 
@@ -114,9 +116,9 @@ class WorkerPool<Request extends Object, Response,
   Future<void> close() async {
     await Future.wait<void>([
       for (final worker in pool)
-        if (worker.hasRun) (await worker.future).close(),
+        if (worker.hasRun) worker.future.then((worker) => worker.close()),
     ]);
-    await _logsController.close();
     await sink.close();
+    await _logsController.close();
   }
 }

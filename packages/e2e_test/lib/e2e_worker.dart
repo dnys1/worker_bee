@@ -14,12 +14,11 @@ abstract class E2EWorker extends WorkerBeeBase<E2EMessage, E2EResult> {
     Stream<E2EMessage> listen,
     StreamSink<E2EResult> respond,
   ) async {
-    // Reflect a received message
     final event = await listen.first;
     final result = E2EResult((b) => b.message.replace(event));
     respond.add(result);
 
     // Complete with a result
-    return result;
+    return E2EResult((b) => b.message.replace(message));
   }
 }

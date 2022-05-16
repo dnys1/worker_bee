@@ -8,39 +8,44 @@ import 'package:e2e_test/e2e_worker_void_result.dart';
 import 'package:test/test.dart';
 import 'package:worker_bee/worker_bee.dart';
 
-void _expectMessage(E2EMessage workerMessage) {
-  final _message = message;
-  expect(workerMessage.bigInt, equals(_message.bigInt));
-  expect(workerMessage.bool_, equals(_message.bool_));
+E2EMessage createMessage() => message;
+
+Future<void> _expectMessage(E2EMessage workerMessage) async {
+  final message = createMessage();
+  expect(workerMessage.bigInt, equals(message.bigInt));
+  expect(workerMessage.bool_, equals(message.bool_));
   expect(workerMessage.builtList.toList(),
-      orderedEquals(_message.builtList.toList()));
+      orderedEquals(message.builtList.toList()));
   expect(workerMessage.builtListMultimap.toMap(),
-      equals(_message.builtListMultimap.toMap()));
-  expect(workerMessage.builtMap.toMap(), equals(_message.builtMap.toMap()));
-  expect(workerMessage.builtSet.toSet(), equals(_message.builtSet.toSet()));
-  expect(workerMessage.dateTime, equals(_message.dateTime));
-  expect(workerMessage.double_, equals(_message.double_));
-  expect(workerMessage.duration, equals(_message.duration));
-  expect(workerMessage.int64, equals(_message.int64));
-  expect(workerMessage.int_, equals(_message.int_));
-  expect(workerMessage.jsonObject.value, equals(_message.jsonObject.value));
-  expect(workerMessage.num_, equals(_message.num_));
-  expect(workerMessage.regExp.pattern, equals(_message.regExp.pattern));
-  expect(workerMessage.uri, equals(_message.uri));
-  // expect(workerMessage.intStream, emitsInOrder(intStreamElements));
-  // expect(
-  //   workerMessage.customTypeStream,
-  //   emitsInOrder(customTypeStreamElements),
-  // );
+      equals(message.builtListMultimap.toMap()));
+  expect(workerMessage.builtMap.toMap(), equals(message.builtMap.toMap()));
+  expect(workerMessage.builtSet.toSet(), equals(message.builtSet.toSet()));
+  expect(workerMessage.dateTime, equals(message.dateTime));
+  expect(workerMessage.double_, equals(message.double_));
+  expect(workerMessage.duration, equals(message.duration));
+  expect(workerMessage.int64, equals(message.int64));
+  expect(workerMessage.int_, equals(message.int_));
+  expect(workerMessage.jsonObject.value, equals(message.jsonObject.value));
+  expect(workerMessage.num_, equals(message.num_));
+  expect(workerMessage.regExp.pattern, equals(message.regExp.pattern));
+  expect(workerMessage.uri, equals(message.uri));
+  await expectLater(
+    workerMessage.intStream,
+    emitsInOrder([...intStreamElements, emitsDone]),
+  );
+  await expectLater(
+    workerMessage.customTypeStream,
+    emitsInOrder([...customTypeStreamElements, emitsDone]),
+  );
 }
 
 Future<void> testWorker({String? jsEntrypoint}) async {
-  final _message = message;
+  final message = createMessage();
 
   final worker = E2EWorker.create();
   worker.logs.listen(print);
   await worker.spawn(jsEntrypoint: jsEntrypoint);
-  worker.add(_message);
+  worker.add(message);
 
   final messages = await worker.stream.take(1).toList();
   final result = await Result.release(worker.result);
@@ -48,60 +53,69 @@ Future<void> testWorker({String? jsEntrypoint}) async {
   for (final workerMessage in [...messages, result].map((el) => el!.message)) {
     _expectMessage(workerMessage);
   }
+
+  await worker.close();
 }
 
 Future<void> testWorkerThrows({String? jsEntrypoint}) async {
-  final _message = message;
+  final message = createMessage();
 
   final worker = E2EWorkerThrows.create();
   worker.logs.listen(print);
   await worker.spawn(jsEntrypoint: jsEntrypoint);
-  worker.add(_message);
+  worker.sink.add(message);
 
-  expect(worker.stream, emitsError(anything));
-  expect(worker.result, completion(isA<ErrorResult>()));
+  await expectLater(worker.stream, emitsError(anything));
+  await expectLater(worker.result, completion(isA<ErrorResult>()));
+
+  await worker.close();
 }
 
 Future<void> testWorkerNoResult({String? jsEntrypoint}) async {
-  final _message = message;
+  final message = createMessage();
 
   final worker = E2EWorkerNoResult.create();
   worker.logs.listen(print);
   await worker.spawn(jsEntrypoint: jsEntrypoint);
-  worker.add(_message);
+  worker.sink.add(message);
 
   final messages = await worker.stream.take(1).toList();
-  expect(Result.release(worker.result), completion(isNull));
+  await expectLater(Result.release(worker.result), completion(isNull));
   for (final workerMessage in messages.map((el) => el.message)) {
     _expectMessage(workerMessage);
   }
+
+  await worker.close();
 }
 
 Future<void> testWorkerNullResult({String? jsEntrypoint}) async {
-  final _message = message;
+  final message = createMessage();
 
   final worker = E2EWorkerNullResult.create();
   worker.logs.listen(print);
   await worker.spawn(jsEntrypoint: jsEntrypoint);
-  worker.add(_message);
+  worker.sink.add(message);
 
-  final messages = await worker.stream.take(1).toList();
-  expect(messages.first, isNull);
+  expect(worker.stream, emitsInOrder([isNull, emitsDone]));
   final result = await Result.release(worker.result);
   expect(result, isNotNull);
   _expectMessage(result!.message);
+
+  await worker.close();
 }
 
 Future<void> testWorkerVoidResult({String? jsEntrypoint}) async {
-  final _message = message;
+  final message = createMessage();
 
   final worker = E2EWorkerVoidResult.create();
   worker.logs.listen(print);
   await worker.spawn(jsEntrypoint: jsEntrypoint);
-  worker.add(_message);
+  worker.sink.add(message);
 
-  expect(worker.stream.take(1).toList(), completes);
-  expect(Result.release(worker.result), completes);
+  await expectLater(worker.stream, emitsDone);
+  await expectLater(Result.release(worker.result), completes);
+
+  await worker.close();
 }
 
 Future<void> testWorkerPool({String? jsEntrypoint}) async {
@@ -116,22 +130,40 @@ Future<void> testWorkerPool({String? jsEntrypoint}) async {
 
   expect(liveWorkers(), 0);
 
-  final worker1 = await workerPool.assign(message, jsEntrypoint: jsEntrypoint);
+  final worker1 = await workerPool.assign(
+    createMessage(),
+    jsEntrypoint: jsEntrypoint,
+  );
   expect(liveWorkers(), 1);
 
-  final worker2 = await workerPool.assign(message, jsEntrypoint: jsEntrypoint);
+  final worker2 = await workerPool.assign(
+    createMessage(),
+    jsEntrypoint: jsEntrypoint,
+  );
   expect(liveWorkers(), 2);
 
-  final worker3 = await workerPool.assign(message, jsEntrypoint: jsEntrypoint);
+  final worker3 = await workerPool.assign(
+    createMessage(),
+    jsEntrypoint: jsEntrypoint,
+  );
   expect(liveWorkers(), 3);
 
-  final worker4 = await workerPool.assign(message, jsEntrypoint: jsEntrypoint);
+  final worker4 = await workerPool.assign(
+    createMessage(),
+    jsEntrypoint: jsEntrypoint,
+  );
   expect(liveWorkers(), 4);
 
-  final worker5 = await workerPool.assign(message, jsEntrypoint: jsEntrypoint);
+  final worker5 = await workerPool.assign(
+    createMessage(),
+    jsEntrypoint: jsEntrypoint,
+  );
   expect(liveWorkers(), 5);
 
-  final worker6 = await workerPool.assign(message, jsEntrypoint: jsEntrypoint);
+  final worker6 = await workerPool.assign(
+    createMessage(),
+    jsEntrypoint: jsEntrypoint,
+  );
   expect(liveWorkers(), 5);
   expect(identical(worker1, worker6), isTrue);
 
@@ -151,7 +183,7 @@ Future<void> testRemoteWorkerPool({String? jsEntrypoint}) async {
   final stream = StreamQueue(pool.stream);
 
   for (var i = 0; i < numWorkers; i++) {
-    pool.add(message);
+    pool.add(createMessage());
   }
 
   await expectLater(
@@ -160,5 +192,5 @@ Future<void> testRemoteWorkerPool({String? jsEntrypoint}) async {
   );
 
   await pool.close();
-  expect(() => pool.add(message), throwsStateError);
+  expect(() => pool.add(createMessage()), throwsStateError);
 }

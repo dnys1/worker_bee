@@ -15,7 +15,7 @@ Future<void> _run(SendPorts ports) async {
     channel.sink.cast(),
   );
 // ignore: invalid_use_of_protected_member
-  worker.logger.info('Finished');
+  worker.logger.finest('Finished');
   unawaited(worker.close());
   Isolate.exit(ports.donePort);
 }
