@@ -1,3 +1,5 @@
+@TestOn('browser')
+
 import 'dart:async';
 
 import 'package:built_value/serializer.dart';

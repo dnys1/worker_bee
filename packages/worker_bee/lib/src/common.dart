@@ -200,9 +200,9 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
 
   @protected
   set stream(Stream<Response> stream) {
-    _streamController.addStream(stream, cancelOnError: true).whenComplete(() {
-      if (!_streamController.isClosed) _streamController.close();
-    });
+    _streamController
+        .addStream(stream, cancelOnError: true)
+        .whenComplete(_streamController.close);
   }
 
   /// The sink for requests.
@@ -239,7 +239,6 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
           (op) => force ? op.cancel() : op.valueOrCancellation(),
         ));
         await sink.close();
-        if (!_streamController.isClosed) _streamController.close();
       });
 
   @override
