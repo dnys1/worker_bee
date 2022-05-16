@@ -7,10 +7,7 @@ import 'package:worker_bee/src/serializers/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 Type _typeOf<T>() => T;
-
-/// The type of `void`.
-@internal
-final voidType = _typeOf<void>();
+final _voidType = _typeOf<void>();
 
 /// {@template worker_bee.worker_bee_common}
 /// The common (platform-agnostic) implementations for a worker bee.
@@ -43,7 +40,7 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
     final hasResponseSerializer =
         serializers.serializerForType(Response) != null;
     // Cannot check `Response != void`
-    if (_typeOf<Response>() != voidType &&
+    if (_typeOf<Response>() != _voidType &&
         // TODO: No determination can be made when Response is nullable
         _typeOf<Response>() != _typeOf<Response?>() &&
         !hasResponseSerializer) {
