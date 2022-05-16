@@ -11,6 +11,9 @@ Worker bees provide an opinionated solution to these problems, allowing a single
 
 ### Caveats
 - Request and response types must be serializable via [`built_value`](https://pub.dev/packages/built_value)
+- Stream serialization is dependent on transferable `ReadableStream`s which are not currently supported in Firefox and Safari, although both have acknowledged plans to implement them:
+  - Firefox: https://github.com/mozilla/standards-positions/issues/430
+  - Safari: https://lists.webkit.org/pipermail/webkit-dev/2020-August/031350.html
 
 ## Getting Started
 

@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:html';
 
 import 'package:built_value/serializer.dart';
 import 'package:worker_bee/src/exception/worker_bee_exception.dart';
+import 'package:worker_bee/src/js/interop/common.dart';
 import 'package:worker_bee/src/serializers/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
@@ -30,21 +30,35 @@ class MessagePortChannel<T>
   StreamSink<T> get sink => this;
 
   @override
-  Stream<T> get stream => messagePort.onMessage.transform(
+  late final Stream<T> stream = messagePort.onMessage
+      .transform(
         StreamTransformer<MessageEvent, T>.fromHandlers(
-          handleData: (event, sink) {
+          handleData: Zone.current.bindBinaryCallback((event, sink) {
+            if (event.data == 'done') {
+              sink.close();
+              close();
+              return;
+            }
             final data = _serializers.deserialize(
               event.data,
               specifiedType: _specifiedType,
             );
-            if (data is T) {
-              sink.add(data);
+            if (data is WorkerBeeException || data is! T) {
+              sink.addError(
+                data as Object,
+                data is WorkerBeeException ? data.stackTrace : null,
+              );
             } else {
-              sink.addError(data as Object);
+              sink.add(data);
             }
-          },
+          }),
+          handleDone: Zone.current.bindUnaryCallback((sink) {
+            sink.close();
+            close();
+          }),
         ),
-      );
+      )
+      .takeUntil(_done.future);
 
   @override
   void add(T event) {
@@ -67,6 +81,7 @@ class MessagePortChannel<T>
       WorkerBeeExceptionImpl(error, stackTrace),
       specifiedType: FullType.unspecified,
     ));
+    close();
   }
 
   @override
@@ -76,10 +91,12 @@ class MessagePortChannel<T>
     }
   }
 
-  final Completer<void> _done = Completer<void>.sync();
+  final Completer<void> _done = Completer<void>();
 
   @override
   Future<void> close() async {
+    if (_done.isCompleted) return;
+    messagePort.postMessage('done');
     messagePort.close();
     _done.complete();
   }

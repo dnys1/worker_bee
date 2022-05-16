@@ -7,7 +7,10 @@ import 'package:worker_bee/src/serializers/serializers.dart';
 import 'package:worker_bee/worker_bee.dart';
 
 Type _typeOf<T>() => T;
-final _voidType = _typeOf<void>();
+
+/// The type of `void`.
+@internal
+final voidType = _typeOf<void>();
 
 /// {@template worker_bee.worker_bee_common}
 /// The common (platform-agnostic) implementations for a worker bee.
@@ -40,7 +43,7 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
     final hasResponseSerializer =
         serializers.serializerForType(Response) != null;
     // Cannot check `Response != void`
-    if (Response != _voidType &&
+    if (_typeOf<Response>() != voidType &&
         // TODO: No determination can be made when Response is nullable
         _typeOf<Response>() != _typeOf<Response?>() &&
         !hasResponseSerializer) {
@@ -66,6 +69,15 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
         local: !isRemoteWorker,
       ));
     });
+  }
+
+  /// Operations which must complete before calling [close].
+  final List<CancelableOperation<void>> _pendingOperations = [];
+
+  /// Adds a Future to track which will be closed on [close].
+  @protected
+  void addPendingOperation(CancelableOperation<void> pendingOp) {
+    _pendingOperations.add(pendingOp);
   }
 
   /// The name of the worker.
@@ -144,10 +156,10 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
     StreamChannel<LogMessage>? logsChannel,
   }) async {
     _isRemoteWorker = true;
-    logger.info('Connected from worker');
     if (logsChannel != null) {
       _logsChannel = logsChannel;
     }
+    logger.finest('Connected from worker');
   }
 
   /// The asynchronous ready trigger.
@@ -155,7 +167,8 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
   final Completer<void> ready = Completer();
 
   final StreamSinkCompleter<Request> _sinkCompleter = StreamSinkCompleter();
-  final StreamCompleter<Response> _streamCompleter = StreamCompleter();
+  final StreamController<Response> _streamController =
+      StreamController.broadcast(sync: true);
   final Completer<Result<Response?>> _resultCompleter = Completer.sync();
 
   /// Whether the worker bee has been completed and/or is closed.
@@ -165,29 +178,31 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
   @protected
   void complete(Response? result) {
     if (isCompleted) return;
-    logger.fine('Finished with result: $result');
+    logger.finest('Finished with result: $result');
     _resultCompleter.complete(Result.value(result));
-    close();
+    close(force: false);
   }
 
   /// Internal method for completing with an error.
   @protected
   void completeError(Object error, [StackTrace? stackTrace]) {
     logger.severe('Error in worker', error, stackTrace);
-    if (isCompleted) return;
-    _resultCompleter.complete(Result.error(error, stackTrace));
-    close();
+    if (!isCompleted) {
+      _resultCompleter.complete(Result.error(error, stackTrace));
+    }
+    close(force: true);
   }
 
-  late final Stream<Response> _stream =
-      _streamCompleter.stream.asBroadcastStream();
+  late final Stream<Response> _stream = _streamController.stream;
 
   /// The stream of responses.
   Stream<Response> get stream => _stream;
 
   @protected
   set stream(Stream<Response> stream) {
-    _streamCompleter.setSourceStream(stream);
+    _streamController.addStream(stream, cancelOnError: true).whenComplete(() {
+      if (!_streamController.isClosed) _streamController.close();
+    });
   }
 
   /// The sink for requests.
@@ -211,13 +226,21 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
   @override
   Future<void> addStream(Stream<Request> stream) => sink.addStream(stream);
 
+  final AsyncMemoizer<void> _closeMemoizer = AsyncMemoizer();
+
   @override
   @mustCallSuper
-  Future<void> close() async {
-    logger.info('Closing worker');
-    await sink.close();
-    await logsController.close();
-  }
+  Future<void> close({
+    bool force = false,
+  }) =>
+      _closeMemoizer.runOnce(() async {
+        logger.finest('Closing worker (force=$force)');
+        await Future.wait(_pendingOperations.map(
+          (op) => force ? op.cancel() : op.valueOrCancellation(),
+        ));
+        await sink.close();
+        if (!_streamController.isClosed) _streamController.close();
+      });
 
   @override
   Future<void> get done => sink.done;

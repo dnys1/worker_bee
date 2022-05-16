@@ -3,6 +3,7 @@ import 'package:built_value/built_value.dart';
 import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:meta/meta.dart';
 
 part 'e2e_message.g.dart';
 
@@ -37,13 +38,13 @@ abstract class E2EMessage implements Built<E2EMessage, E2EMessageBuilder> {
   String get string;
   Uri get uri;
 
-  // @protected
-  // Stream<Object?> get intStreamUncast;
-  // Stream<int> get intStream => intStreamUncast.cast();
+  @protected
+  Stream<Object?>? get intStreamUncast;
+  Stream<int>? get intStream => intStreamUncast?.cast();
 
-  // @protected
-  // Stream<Object?> get customTypeStreamUncast;
-  // Stream<CustomType> get customTypeStream => customTypeStreamUncast.cast();
+  @protected
+  Stream<Object?>? get customTypeStreamUncast;
+  Stream<CustomType>? get customTypeStream => customTypeStreamUncast?.cast();
 
   static Serializer<E2EMessage> get serializer => _$e2EMessageSerializer;
 }
@@ -73,32 +74,41 @@ final customTypeStreamElements = [
   CustomType((b) => b..customField = 'e'),
 ];
 
-E2EMessage get message => E2EMessage((b) => b
-      ..bigInt = BigInt.from(123)
-      ..bool_ = true
-      ..builtList.add('abc')
-      ..builtListMultimap.addValues('a', ['1', '2', '3'])
-      ..builtMap.addAll({'a': '1', 'b': '2', 'c': '3'})
-      ..builtSet.add('abc')
-      ..builtSetMultimap.addValues('a', ['1', '2', '3'])
-      ..dateTime = DateTime.utc(1990, 1, 1)
-      ..double_ = 123.0
-      ..duration = Duration(minutes: 4)
-      ..int_ = 123
-      ..int64 = Int64(123)
-      ..jsonObject = JsonObject(123)
-      ..num_ = 123
-      ..regExp = RegExp(r'^\w{3}$')
-      ..string = 'abc'
-      ..uri = Uri.parse('https://example.com')
-    // ..intStreamUncast = Stream.multi(
-    //   (controller) => controller.addStream(
-    //     Stream.fromIterable(intStreamElements),
-    //   ),
-    // )
-    // ..customTypeStreamUncast = Stream.multi(
-    //   (controller) => controller.addStream(
-    //     Stream.fromIterable(customTypeStreamElements),
-    //   ),
-    // ),
+E2EMessage get message => E2EMessage(
+      (b) => b
+        ..bigInt = BigInt.from(123)
+        ..bool_ = true
+        ..builtList.add('abc')
+        ..builtListMultimap.addValues('a', ['1', '2', '3'])
+        ..builtMap.addAll({'a': '1', 'b': '2', 'c': '3'})
+        ..builtSet.add('abc')
+        ..builtSetMultimap.addValues('a', ['1', '2', '3'])
+        ..dateTime = DateTime.utc(1990, 1, 1)
+        ..double_ = 123.0
+        ..duration = Duration(minutes: 4)
+        ..int_ = 123
+        ..int64 = Int64(123)
+        ..jsonObject = JsonObject(123)
+        ..num_ = 123
+        ..regExp = RegExp(r'^\w{3}$')
+        ..string = 'abc'
+        ..uri = Uri.parse('https://example.com')
+        ..intStreamUncast = Stream.multi(
+          (controller) async {
+            await controller.addStream(
+              Stream.fromIterable(intStreamElements),
+            );
+            controller.close();
+          },
+          isBroadcast: true,
+        )
+        ..customTypeStreamUncast = Stream.multi(
+          (controller) async {
+            await controller.addStream(
+              Stream.fromIterable(customTypeStreamElements),
+            );
+            controller.close();
+          },
+          isBroadcast: true,
+        ),
     );

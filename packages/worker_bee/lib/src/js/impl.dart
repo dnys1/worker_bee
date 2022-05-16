@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:html';
 
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 import 'package:worker_bee/src/common.dart';
 import 'package:worker_bee/src/exception/worker_bee_exception.dart';
+import 'package:worker_bee/src/js/interop/common.dart';
+import 'package:worker_bee/src/js/message_port_channel.dart';
 import 'package:worker_bee/src/preamble.dart';
 import 'package:worker_bee/worker_bee.dart';
 
@@ -32,6 +33,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   // Controllers used to manage web worker.
   StreamController<Request>? _controller;
   StreamController<Response>? _incomingMessages;
+  StreamChannel<LogMessage>? _logsChannel;
 
   /// The spawned worker instance.
   Worker? _worker;
@@ -66,18 +68,25 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   /// Deserializes an object using the registered `built_value` serializers.
   @optionalTypeArgs
   T _deserialize<T extends Object?>(Object? object) {
-    return serializers.deserialize(
-      object,
-      // Do not specify type so that it pulls from the array.
-      specifiedType: FullType.unspecified,
-    ) as T;
+    final deserialized = runZoned(
+      () => serializers.deserialize(
+        object,
+        // Do not specify type so that it pulls from the array.
+        specifiedType: FullType.unspecified,
+      ) as T,
+      zoneValues: {
+        #addPendingOperation: addPendingOperation,
+      },
+    );
+    return deserialized;
   }
 
   @override
   void completeError(Object error, [StackTrace? stackTrace]) {
-    error = _serialize(error).value as Object;
     if (isWebWorker) {
-      self.postMessage(error);
+      final serialized = _serialize(error);
+      error = serialized.value!;
+      self.postMessage(serialized.value, serialized.transfer);
     }
     super.completeError(error, stackTrace);
   }
@@ -90,36 +99,38 @@ mixin WorkerBeeImpl<Request extends Object, Response>
     return runTraced(
       () async {
         await super.connect(logsChannel: logsChannel);
-        logger.info('Connected from worker');
         final channel = StreamChannelController<Object?>(sync: true);
         self.addEventListener(
           'message',
           Zone.current.bindUnaryCallback<void, Event>((Event event) {
             event as MessageEvent;
-            logger.fine('Got message: ${event.data}');
-            final serialized = event.data as Object?;
+            logger.finest('Got message: ${event.data}');
+            final serialized = event.data;
             final message = _deserialize<Request>(serialized);
             channel.foreign.sink.add(message);
           }),
         );
         channel.foreign.stream.listen(
           Zone.current.bindUnaryCallback((message) {
-            logger.fine('Sending message: $message');
+            logger.finest('Sending message: $message');
             final serialized = _serialize(message);
             self.postMessage(serialized.value, serialized.transfer);
           }),
         );
-        logger.info('Ready');
+        logger.finest('Ready');
         self.postMessage('ready');
         final result = await run(
           channel.local.stream.asBroadcastStream().cast(),
           channel.local.sink.cast(),
         );
-        logger.info('Finished');
+        logger.finest('Finished');
         self.postMessage('done');
 
         final serializedResult = _serialize(result);
         self.postMessage(serializedResult.value, serializedResult.transfer);
+
+        // Allow streams to flush, then close underlying resources.
+        await close();
       },
       onError: completeError,
     );
@@ -131,7 +142,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
     return runTraced(
       () async {
         final entrypoint = jsEntrypoint ?? this.jsEntrypoint;
-        logger.info('Spawning worker at $entrypoint');
+        logger.finest('Spawning worker at $entrypoint');
 
         // Spawn the worker using the specified script.
         try {
@@ -173,7 +184,7 @@ mixin WorkerBeeImpl<Request extends Object, Response>
             'Could not serialize message: ${event.data}',
           ));
         });
-        _worker!.onError.listen((Event event) {
+        _worker!.onError = (Event event) {
           Object error;
           if (event is ErrorEvent) {
             final eventJson = JSON.stringify(event.error);
@@ -182,12 +193,12 @@ mixin WorkerBeeImpl<Request extends Object, Response>
             error = WorkerBeeExceptionImpl('An unknown error occurred');
           }
           completeError(error);
-        });
+        };
 
         // Passes outgoing messages to the worker instance.
         _controller!.stream.listen(
           Zone.current.bindUnaryCallback((message) {
-            logger.fine('Sending message: $message');
+            logger.finest('Sending message: $message');
             final serialized = _serialize(message);
             _worker!.postMessage(serialized.value, serialized.transfer);
           }),
@@ -195,52 +206,53 @@ mixin WorkerBeeImpl<Request extends Object, Response>
 
         // Listen to worker
         _incomingMessages = StreamController<Response>(sync: true);
-        _worker!.onMessage.listen(
-          Zone.current.bindUnaryCallback((MessageEvent event) {
-            if (event.data is String) {
-              if (event.data == 'ready') {
-                logger.info('Received ready event');
-                ready.complete();
-                return;
-              }
-              if (event.data == 'done') {
-                logger.info('Received done event');
-                done = true;
-                return;
-              }
-            }
-            final serialized = event.data as Object?;
-            var message = _deserialize(serialized);
-            logger.fine('Got message: $message');
-            if (message is WorkerBeeException) {
-              _incomingMessages!.addError(message, message.stackTrace);
-              completeError(message);
+        _worker!.onMessage =
+            Zone.current.bindUnaryCallback((MessageEvent event) {
+          if (event.data is String) {
+            if (event.data == 'ready') {
+              logger.finest('Received ready event');
+              ready.complete();
               return;
             }
-            message as Response?;
-            if (message is Response) {
-              _incomingMessages!.add(message);
+            if (event.data == 'done') {
+              logger.finest('Received done event');
+              done = true;
+              return;
             }
-            if (done) {
-              complete(message);
-            }
-          }),
-        );
+          }
+          final serialized = event.data;
+          var message = _deserialize(serialized);
+          logger.finest('Got message: $message');
+          if (message is WorkerBeeException) {
+            _incomingMessages!.addError(message, message.stackTrace);
+            completeError(message, message.stackTrace);
+            return;
+          }
+          message as Response?;
+          if (message is Response && !done) {
+            _incomingMessages!.add(message);
+          }
+          if (done) {
+            complete(message);
+          }
+        });
 
         stream = _incomingMessages!.stream;
         sink = _controller!.sink;
 
         // Send assignment and logs channel
-        final logsChannel = MessageChannel();
-        logsChannel.port1.onMessage.listen(
-          Zone.current.bindUnaryCallback((event) {
-            final data = event.data as Object?;
-            final message = _deserialize<LogMessage>(data);
+        final jsLogsChannel = MessageChannel();
+        _logsChannel = MessagePortChannel<LogMessage>(
+          jsLogsChannel.port1,
+          serializers: serializers,
+        );
+        _logsChannel!.stream.listen(
+          Zone.current.bindUnaryCallback((message) {
             if (logsController.isClosed) return;
             logsController.add(message);
           }),
         );
-        _worker!.postMessage(name, [logsChannel.port2]);
+        _worker!.postMessage(name, [jsLogsChannel.port2]);
 
         await ready.future;
       },
@@ -249,13 +261,26 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   }
 
   @override
-  Future<void> close() async {
-    await super.close();
+  Future<void> close({
+    bool force = false,
+  }) async {
+    // Close the request/response channels.
     await _incomingMessages?.close();
     await _controller?.close();
-    _worker?.terminate();
-    _worker = null;
     _incomingMessages = null;
     _controller = null;
+
+    // Await pending operations which may need logging utilities.
+    await super.close(force: force);
+
+    // Close remote logging.
+    await _logsChannel?.sink.close();
+    _logsChannel = null;
+
+    // Close local logging.
+    await logsController.close();
+
+    _worker?.terminate();
+    _worker = null;
   }
 }

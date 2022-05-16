@@ -42,7 +42,7 @@ ${trueResponseType.isVoid ? '' : 'final result ='} await worker.run(
   channel.sink.cast(),
 );
 // ignore: invalid_use_of_protected_member
-worker.logger.info('Finished');
+worker.logger.finest('Finished');
 ${allocate(DartTypes.async.unawaited)}(worker.close());
 ${allocate(DartTypes.isolate.isolate)}.exit(ports.donePort${trueResponseType.isVoid ? '' : ', result'});
             '''),
