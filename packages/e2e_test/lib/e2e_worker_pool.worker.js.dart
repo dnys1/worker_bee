@@ -10,5 +10,7 @@ class E2EWorkerPoolImpl extends E2EWorkerPool {
   @override
   String get jsEntrypoint => 'main.dart.js';
   @override
+  List<String> get fallbackUrls => const [];
+  @override
   E2EWorker Function() get factory => E2EWorker.create;
 }

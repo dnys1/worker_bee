@@ -10,9 +10,11 @@ class JsGenerator extends MessageGenerator {
     ClassElement? responseTypeEl,
     ClassElement? poolWorkerTypeEl,
     this.entrypoint,
+    this.fallbackUrls,
   ) : super(classEl, requestTypeEl, responseTypeEl, poolWorkerTypeEl);
 
   final String entrypoint;
+  final List<String> fallbackUrls;
 
   @override
   Library generate() {
@@ -42,6 +44,12 @@ class JsGenerator extends MessageGenerator {
               ..type = MethodType.getter
               ..name = 'jsEntrypoint'
               ..body = literalString(entrypoint).code),
+            Method((m) => m
+              ..annotations.add(DartTypes.core.override)
+              ..returns = DartTypes.core.list(DartTypes.core.string)
+              ..type = MethodType.getter
+              ..name = 'fallbackUrls'
+              ..body = literalConstList(fallbackUrls).code),
             if (isWorkerPool) factoryGetter,
           ]),
       );

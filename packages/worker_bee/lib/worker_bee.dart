@@ -35,10 +35,16 @@ export 'src/worker_bee_vm.dart' if (dart.library.js) 'src/worker_bee_js.dart';
 /// {@endtemplate}
 class WorkerBee {
   /// {@macro worker_bee.worker_bee}
-  const WorkerBee([this.jsEntrypoint = 'main.dart.js']);
+  const WorkerBee([
+    this.jsEntrypoint = 'main.dart.js',
+    this.fallbackUrls = const [],
+  ]);
 
   /// The URL to load the web worker from.
   final String jsEntrypoint;
+
+  /// The URLs to try if loading [jsEntrypoint] fails.
+  final List<String> fallbackUrls;
 }
 
 /// {@template worker_bee.worker_hive}

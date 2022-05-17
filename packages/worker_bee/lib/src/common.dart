@@ -41,7 +41,7 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
         serializers.serializerForType(Response) != null;
     // Cannot check `Response != void`
     if (_typeOf<Response>() != _voidType &&
-        // TODO: No determination can be made when Response is nullable
+        // No determination can be made when Response is nullable
         _typeOf<Response>() != _typeOf<Response?>() &&
         !hasResponseSerializer) {
       throw StateError(
@@ -121,6 +121,9 @@ abstract class WorkerBeeCommon<Request extends Object, Response>
 
   /// The script URL for the compiled workers.
   String get jsEntrypoint => throw UnimplementedError();
+
+  /// The fallback URLs for the JS worker.
+  List<String> get fallbackUrls => throw UnimplementedError();
 
   /// {@template worker_bee.worker_entrypoint_override}
   /// The alternative entrypoint used to spawn workers in the pool.

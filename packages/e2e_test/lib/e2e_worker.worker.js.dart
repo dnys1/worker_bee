@@ -8,4 +8,6 @@ class E2EWorkerImpl extends E2EWorker {
   String get name => 'E2EWorker';
   @override
   String get jsEntrypoint => 'main.dart.js';
+  @override
+  List<String> get fallbackUrls => const [];
 }

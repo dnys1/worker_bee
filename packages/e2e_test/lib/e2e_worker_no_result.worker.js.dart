@@ -8,4 +8,6 @@ class E2EWorkerNoResultImpl extends E2EWorkerNoResult {
   String get name => 'E2EWorkerNoResult';
   @override
   String get jsEntrypoint => 'main.dart.js';
+  @override
+  List<String> get fallbackUrls => const [];
 }

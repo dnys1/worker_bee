@@ -8,4 +8,6 @@ class E2EWorkerVoidResultImpl extends E2EWorkerVoidResult {
   String get name => 'E2EWorkerVoidResult';
   @override
   String get jsEntrypoint => 'main.dart.js';
+  @override
+  List<String> get fallbackUrls => const [];
 }

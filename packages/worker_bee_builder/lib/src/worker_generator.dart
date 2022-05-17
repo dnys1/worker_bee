@@ -58,12 +58,19 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
     final poolWorkerTypeEl = poolWorkerType?.element;
 
     final jsEntrypoint = annotation.read('jsEntrypoint').stringValue;
+    final fallbackUrls = annotation
+        .read('fallbackUrls')
+        .listValue
+        .map((obj) => obj.toStringValue())
+        .toList()
+        .cast<String>();
     final workerImpls = generateWorkerImpls(
       element,
       requestTypeEl,
       responseTypeEl as ClassElement?,
       poolWorkerTypeEl as ClassElement?,
       jsEntrypoint,
+      fallbackUrls,
     );
 
     final libraries = <Target, String>{};
@@ -83,6 +90,7 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
     ClassElement? resultTypeEl,
     ClassElement? poolWorkerTypeEl,
     String jsEntrypoint,
+    List<String> fallbackUrls,
   ) {
     final vmClass = VmGenerator(
       workerEl,
@@ -96,6 +104,7 @@ class WorkerBeeGenerator extends GeneratorForAnnotation<WorkerBee> {
       resultTypeEl,
       poolWorkerTypeEl,
       jsEntrypoint,
+      fallbackUrls,
     ).generate();
 
     return [

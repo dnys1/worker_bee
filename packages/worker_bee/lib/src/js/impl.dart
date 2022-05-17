@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as path;
 import 'package:worker_bee/src/common.dart';
 import 'package:worker_bee/src/exception/worker_bee_exception.dart';
 import 'package:worker_bee/src/js/interop/common.dart';
@@ -40,6 +39,9 @@ mixin WorkerBeeImpl<Request extends Object, Response>
 
   @override
   String get jsEntrypoint;
+
+  @override
+  List<String> get fallbackUrls => const [];
 
   @override
   String? get workerEntrypointOverride {
@@ -141,24 +143,24 @@ mixin WorkerBeeImpl<Request extends Object, Response>
   Future<void> spawn({String? jsEntrypoint}) async {
     return runTraced(
       () async {
-        final entrypoint = jsEntrypoint ?? this.jsEntrypoint;
-        logger.finest('Spawning worker at $entrypoint');
+        for (final entrypoint in [
+          if (jsEntrypoint != null) jsEntrypoint,
+          this.jsEntrypoint,
+          ...fallbackUrls
+        ]) {
+          logger.finest('Spawning worker at $entrypoint');
 
-        // Spawn the worker using the specified script.
-        try {
-          _worker = Worker(entrypoint);
-        } on Object {
-          // If `entrypoint` contains a path, try again at the root to
-          // account for Dart vs. Flutter semantics when deploying Web apps.
-          final rootEntrypoint = path.basename(entrypoint);
-          logger.severe('Worker not found. Trying at $rootEntrypoint');
+          // Spawn the worker using the specified script.
           try {
-            _worker = Worker(rootEntrypoint);
+            _worker = Worker(entrypoint);
+            break;
           } on Object {
-            throw WorkerBeeExceptionImpl(
-              'Could not launch web worker at $entrypoint.',
-            );
+            logger.finest('Could not launch worker at $entrypoint');
+            continue;
           }
+        }
+        if (_worker == null) {
+          throw WorkerBeeExceptionImpl('Could not launch web worker.');
         }
 
         // Whether `run` has completed on the web worker.
