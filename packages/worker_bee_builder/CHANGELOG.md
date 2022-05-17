@@ -1,3 +1,9 @@
+## 0.6.0
+
+> Note: This release has breaking changes.
+
+ - **BREAKING** **FEAT**: Static interop and stream serialization (#5).
+
 ## 0.5.1
 
  - Update a dependency to the latest release.

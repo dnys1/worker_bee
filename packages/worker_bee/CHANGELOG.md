@@ -1,3 +1,11 @@
+## 0.6.0
+
+> Note: This release has breaking changes.
+
+ - **FIX**: Revert stream serialization.
+ - **FIX**: Add error to stream.
+ - **BREAKING** **FEAT**: Static interop and stream serialization (#5).
+
 ## 0.5.1
 
  - **FIX**: Revert stream serialization.

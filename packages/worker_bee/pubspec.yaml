@@ -1,6 +1,6 @@
 name: worker_bee
 description: Cross-platform isolated worker runtime
-version: 0.5.1
+version: 0.6.0
 homepage: https://github.com/dnys1/worker_bee
 publish_to: https://pub.dillonnys.com
 
