@@ -8,4 +8,6 @@ class MyWorkerImpl extends MyWorker {
   String get name => 'MyWorker';
   @override
   String get jsEntrypoint => 'main.dart.js';
+  @override
+  List<String> get fallbackUrls => const [];
 }
