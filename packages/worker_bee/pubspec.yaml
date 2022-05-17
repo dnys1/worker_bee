@@ -9,11 +9,7 @@ environment:
 
 dependencies:
   async: ^2.8.0
-  aws_common:
-    hosted: 
-      url: https://pub.dillonnys.com
-      name: aws_common
-    version: ^0.2.0
+  aws_common: ^0.1.0
   built_collection: ^5.1.1
   built_value: ^8.0.0
   collection: ^1.15.0
