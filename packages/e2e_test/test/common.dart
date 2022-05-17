@@ -10,7 +10,7 @@ import 'package:worker_bee/worker_bee.dart';
 
 E2EMessage createMessage() => message;
 
-Future<void> _expectMessage(E2EMessage workerMessage) async {
+void _expectMessage(E2EMessage workerMessage) {
   final message = createMessage();
   expect(workerMessage.bigInt, equals(message.bigInt));
   expect(workerMessage.bool_, equals(message.bool_));
@@ -29,11 +29,11 @@ Future<void> _expectMessage(E2EMessage workerMessage) async {
   expect(workerMessage.num_, equals(message.num_));
   expect(workerMessage.regExp.pattern, equals(message.regExp.pattern));
   expect(workerMessage.uri, equals(message.uri));
-  await expectLater(
+  expect(
     workerMessage.intStream,
     emitsInOrder([...intStreamElements, emitsDone]),
   );
-  await expectLater(
+  expect(
     workerMessage.customTypeStream,
     emitsInOrder([...customTypeStreamElements, emitsDone]),
   );
