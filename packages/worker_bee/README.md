@@ -1,5 +1,7 @@
 # Worker Bee
 
+> **NOTE**: This project is being worked on as part of the [Amplify Flutter](https://docs.amplify.aws/lib/q/platform/flutter/) project. Further development will take place [here](https://github.com/aws-amplify/amplify-flutter/tree/next/packages/worker_bee/worker_bee).
+
 - [Worker Bee](#worker-bee)
   - [Getting Started](#getting-started)
   - [Running the Worker](#running-the-worker)
